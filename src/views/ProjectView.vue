@@ -24,14 +24,14 @@ const project = ref({});
 const meetings = ref([]);
 
 async function load() {
-  const res = await fetch("http://localhost:3000/project");
+  const res = await fetch(document.location.origin+"/project");
   const data = await res.json();
   project.value = data.project;
   meetings.value = data.meetings;
 }
 
 async function addMeeting() {
-  await fetch("http://localhost:3000/meetings", {
+  await fetch(document.location.origin+"/meetings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title: "New Meeting", date: "2026-01-25" })
