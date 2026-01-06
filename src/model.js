@@ -84,17 +84,19 @@ class GroupProjectHelperModel {
       });
 
       // Create in-memory database
-      const db = new SQL.Database();
+      this.db = new SQL.Database();
+    }
 
+    async testDatabase() {
       // Create a table
-      db.run("CREATE TABLE users (id INTEGER, name TEXT);");
+      this.db.run("CREATE TABLE users (id INTEGER, name TEXT);");
 
       // Insert some data
-      db.run("INSERT INTO users VALUES (1, 'Alice');");
-      db.run("INSERT INTO users VALUES (2, 'Bob');");
+      this.db.run("INSERT INTO users VALUES (1, 'Alice');");
+      this.db.run("INSERT INTO users VALUES (2, 'Bob');");
 
       // Query data
-      const res = db.exec("SELECT * FROM users;");
+      const res = this.db.exec("SELECT * FROM users;");
       
       // The results are in res[0].values
       return res[0].values;

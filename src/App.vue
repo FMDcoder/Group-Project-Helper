@@ -29,7 +29,8 @@ import GroupProjectHelperModel from './model.js'
         this.reRenderKey += 1;
       },
       async setupDatabase() {
-        this.results = await this.model.setupDatabase();
+        await this.model.setupDatabase();
+        this.results = await this.model.testDatabase();
       }
     }
   }
