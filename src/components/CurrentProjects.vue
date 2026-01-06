@@ -1,26 +1,24 @@
 <template>
   <div class="projects">
-    <h2>Active projects</h2>
-
+    <h2>Active projects:</h2>
     <input
       type="text"
       v-model="searchQuery"
       placeholder="Search projects..."
     />
 
-    <!-- Ask user to search when input is empty -->
     <p v-if="!searchQuery.trim()" class="hint">
       Please type something to search for a project.
     </p>
 
-    <!-- Show filtered projects -->
     <ul v-else-if="filteredProjects.length">
       <li v-for="p in filteredProjects" :key="p.id">
-        {{ p.name }} — {{ p.progress }}%
-      </li>
+      <router-link to="/project" @click="">
+        {{ p.name }}
+      </router-link> — {{ p.progress }}
+     </li>
     </ul>
 
-    <!-- No results -->
     <p v-else class="hint">
       No projects found.
     </p>
@@ -28,13 +26,22 @@
 </template>
 
 <script>
-export default {
-  name: 'CurrentProjects',
- props: ['model'],
-  data() {
+  import ProjectView from '@/views/ProjectView.vue';
+
+  export default {
+    props: ['model'],
+     data() {
     return {
       searchQuery: ''
     };
+  },
+  methods: {
+    getProjects() {
+    return this.model.getProjects();
+    },
+    setCurrentProject(id) {
+    this.model.setCurrentProject(id);
+    }
   },
   computed: {
     // Always return an array so Vue never crashes
@@ -54,7 +61,7 @@ export default {
       );
     }
   }
-};
+}
 </script>
 
 <style scoped>

@@ -78,21 +78,28 @@ class GroupProjectHelperModel {
         return this.projects;
     }
     
+    getCurrentProject() {
+        return this.getProject(this.currentProjectID);
+    }
+    
     getProject(projectID) {
-        return this.projects.filter(p => p.id === projectID);
+        return this.projects.find(p => p.id == projectID);
     }
     
     getProjectTasks(projectID) {
-        return this.projects.find(p => p.id === projectID).tasks;
+        return this.projects.find(p => p.id == projectID).tasks;
     }
     
     getUserTasks() {
-        return this.projects.map(p => p.tasks).flat()
+        return this.projects
+            .map(p => p.tasks.
+                map(t => ({ ...t, project: p.id }))
+            ).flat()
             .filter(t => t.assignedTo === this.userID);
     }
     
     getTasksByDeadline() {
-        return this.getUserTasks(this.userID)
+        return this.getUserTasks()
             .sort((a, b) => a.deadline - b.deadline);
     }
 
@@ -109,6 +116,10 @@ class GroupProjectHelperModel {
     // setters
     setUserID(userID) {
         this.userID = userID;
+    }
+    
+    setCurrentProject(id) {
+        this.currentProjectID = id;
     }
 }
 export default GroupProjectHelperModel
