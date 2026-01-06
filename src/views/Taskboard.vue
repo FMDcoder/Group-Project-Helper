@@ -32,14 +32,14 @@ const columns = ref([]);
 const threads = ref([]);
 
 async function load() {
-  const res = await fetch("http://localhost:3000/taskboard");
+  const res = await fetch(document.location.origin+"/taskboard");
   const data = await res.json();
   columns.value = data.columns;
   threads.value = data.threads;
 }
 
 async function addThread() {
-  await fetch("http://localhost:3000/threads", {
+  await fetch(document.location.origin+"/threads", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: "New Thread" })
@@ -48,7 +48,7 @@ async function addThread() {
 }
 
 async function removeThread(id) {
-  await fetch(`http://localhost:3000/threads/${id}`, {
+  await fetch(document.location.origin+`/threads/${id}`, {
     method: "DELETE"
   });
   load();

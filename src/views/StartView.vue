@@ -20,7 +20,7 @@ const project = ref({});
 const commits = ref([]);
 
 onMounted(async () => {
-  const res = await fetch("http://localhost:3000/start");
+  const res = await fetch(document.location.origin+"/start");
   const data = await res.json();
   project.value = data.project;
   commits.value = data.commits;
