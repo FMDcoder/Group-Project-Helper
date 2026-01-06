@@ -15,7 +15,7 @@
     methods: {
       getTasks() {
         if (typeof project === undefined) {
-          return this.model.getTasksByDeadline(project);
+          return this.model.getProjectTasksByDeadline(project);
         }
         return this.model.getTasksByDeadline();
       },

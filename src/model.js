@@ -74,22 +74,30 @@ class GroupProjectHelperModel {
     }
 
     // getters
-    getProjects(projectID) {
-        if (projectID !== undefined) {
-            return this.projects.filter(p => p.id === projectID);
-        }
+    getProjects() {
         return this.projects;
     }
     
-    getTasks(projectID) {
-        if(projectID !== undefined) {
-            return this.projects.find(p => p.id === projectID).tasks;
-        }
-        return this.projects.map(p => p.tasks).flat();
+    getProject(projectID) {
+        return this.projects.filter(p => p.id === projectID);
     }
     
-    getTasksByDeadline(projectName) {
-        return this.getTasks(projectName)
+    getProjectTasks(projectID) {
+        return this.projects.find(p => p.id === projectID).tasks;
+    }
+    
+    getUserTasks() {
+        return this.projects.map(p => p.tasks).flat()
+            .filter(t => t.assignedTo === this.userID);
+    }
+    
+    getTasksByDeadline() {
+        return this.getUserTasks(this.userID)
+            .sort((a, b) => a.deadline - b.deadline);
+    }
+
+    getProjectTasksByDeadline(projectName) {
+        return this.getProjectTasks(projectName)
             .filter(t => t.assignedTo === this.userID)
             .sort((a, b) => a.deadline - b.deadline);
     }
