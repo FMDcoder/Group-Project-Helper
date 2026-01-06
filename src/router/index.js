@@ -6,8 +6,20 @@ import TaskboardView from "../views/Taskboard.vue";
 export default createRouter({
   history: createWebHistory(),
   routes: [
-    { path: "/", component: StartView },
-    { path: "/project", component: ProjectView },
-    { path: "/taskboard", component: TaskboardView }
+    {
+      path: "/",
+      component: StartView,
+      props: {model: true, reRenderKey: true}
+    },
+    {
+      path: "/project",
+      component: ProjectView,
+      props: {model: true, reRenderKey: true}
+    },
+    {
+      path: "/taskboard",
+      component: TaskboardView,
+      props: {model: true, reRenderKey: true}
+    },
   ]
 });

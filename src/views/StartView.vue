@@ -1,28 +1,18 @@
 <template>
   <section>
-    <h1>Startsidan</h1>
-
-    <p>Projekt: {{ project.name }}</p>
-
-    <h2>Commit Deadlines</h2>
-    <ul>
-      <li v-for="c in commits" :key="c.id">
-        {{ c.title }} – {{ c.deadline }}
-      </li>
-    </ul>
+    <Deadlines :model="model" />
+    <CurrentProjects :model="model" />
+    <NewProjBtn :model="model" />
   </section>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-
-const project = ref({});
-const commits = ref([]);
-
-onMounted(async () => {
-  const res = await fetch(document.location.origin+"/start");
-  const data = await res.json();
-  project.value = data.project;
-  commits.value = data.commits;
-});
+<script>
+  import Deadlines from "../components/Deadlines.vue";
+  import CurrentProjects from "@/components/CurrentProjects.vue";
+  import NewProjBtn from "@/components/NewProjBtn.vue";
+  
+  export default {
+    props: ['model', 'reRenderKey'],
+    components: { Deadlines, NewProjBtn, CurrentProjects },
+  }
 </script>

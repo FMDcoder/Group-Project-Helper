@@ -74,16 +74,16 @@ class GroupProjectHelperModel {
     }
 
     // getters
-    getProjects(projectName) {
-        if (projectName !== undefined) {
-            return this.projects.filter(p => p.name === projectName);
+    getProjects(projectID) {
+        if (projectID !== undefined) {
+            return this.projects.filter(p => p.id === projectID);
         }
         return this.projects;
     }
     
-    getTasks(projectName) {
-        if(projectName !== undefined) {
-            return this.projects.find(p => p.name === projectName).tasks;
+    getTasks(projectID) {
+        if(projectID !== undefined) {
+            return this.projects.find(p => p.id === projectID).tasks;
         }
         return this.projects.map(p => p.tasks).flat();
     }

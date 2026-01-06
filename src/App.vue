@@ -5,5 +5,23 @@
     <router-link to="/taskboard">Taskboard</router-link>
   </nav>
 
-  <router-view />
+  <router-view :model="model", :reRenderKey="reRenderKey" />
 </template>
+
+<script>
+import GroupProjectHelperModel from './model.js'
+
+  export default {
+    data() {
+      return {
+        model: new GroupProjectHelperModel(this.reRender.bind(this)),
+        reRenderKey: 0,
+      }
+    },
+    methods: {
+      reRender() {
+        this.reRenderKey += 1;
+      },
+    }
+  }
+</script>
