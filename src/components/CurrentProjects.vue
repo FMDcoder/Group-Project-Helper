@@ -1,21 +1,75 @@
 <template>
   <div class="projects">
-    <h2>Active projects:</h2>
-    <ul>
-     <li v-for="p in getProjects()" :key="p.id">
-       {{ p.name }} {{ p.progress }}
-     </li>
-    </ul> 
+    <h2>Active projects</h2>
+
+    <input
+      type="text"
+      v-model="searchQuery"
+      placeholder="Search projects..."
+    />
+
+    <!-- Ask user to search when input is empty -->
+    <p v-if="!searchQuery.trim()" class="hint">
+      Please type something to search for a project.
+    </p>
+
+    <!-- Show filtered projects -->
+    <ul v-else-if="filteredProjects.length">
+      <li v-for="p in filteredProjects" :key="p.id">
+        {{ p.name }} — {{ p.progress }}%
+      </li>
+    </ul>
+
+    <!-- No results -->
+    <p v-else class="hint">
+      No projects found.
+    </p>
   </div>
 </template>
 
 <script>
-  export default {
-    props: ['model'],
-    methods: {
-      getProjects() {
-        return this.model.getProjects();
-      },
+export default {
+  name: 'CurrentProjects',
+ props: ['model'],
+  data() {
+    return {
+      searchQuery: ''
+    };
+  },
+  computed: {
+    // Always return an array so Vue never crashes
+    projects() {
+      return this.model?.getProjects() ?? [];
     },
+    // This recomputes automatically when searchQuery changes
+    filteredProjects() {
+      const query = this.searchQuery.trim().toLowerCase();
+
+      if (!query) {
+        return [];
+      }
+
+      return this.projects.filter(project =>
+        project.name.toLowerCase().includes(query)
+      );
+    }
   }
+};
 </script>
+
+<style scoped>
+.projects {
+  max-width: 500px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.hint {
+  color: #666;
+  font-style: italic;
+}
+</style>
