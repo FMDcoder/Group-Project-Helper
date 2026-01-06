@@ -1,3 +1,5 @@
+import initSqlJs from 'sql.js';
+
 const MOCK_PROJECTS = [
     {
         "id": 0,
@@ -72,6 +74,31 @@ class GroupProjectHelperModel {
 
         this.observers.forEach(callObserverCallback);
     }
+    
+    // SQL database
+    async setupDatabase() {
+      // Load SQL.js
+      const SQL = await initSqlJs({
+        // Optional: Path to wasm file if not bundled
+        locateFile: file => document.location.origin+`/database.wasm`
+      });
+
+      // Create in-memory database
+      const db = new SQL.Database();
+
+      // Create a table
+      db.run("CREATE TABLE users (id INTEGER, name TEXT);");
+
+      // Insert some data
+      db.run("INSERT INTO users VALUES (1, 'Alice');");
+      db.run("INSERT INTO users VALUES (2, 'Bob');");
+
+      // Query data
+      const res = db.exec("SELECT * FROM users;");
+      
+      // The results are in res[0].values
+      return res[0].values;
+    }
 
     // getters
     getProjects() {
@@ -120,6 +147,10 @@ class GroupProjectHelperModel {
     
     setCurrentProject(id) {
         this.currentProjectID = id;
+    }
+    
+    testDbModel() {
+        testDB();
     }
 }
 export default GroupProjectHelperModel
