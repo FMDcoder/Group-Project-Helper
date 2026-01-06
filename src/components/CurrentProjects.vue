@@ -26,8 +26,6 @@
 </template>
 
 <script>
-  import ProjectView from '@/views/ProjectView.vue';
-
   export default {
     props: ['model'],
      data() {
