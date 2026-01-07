@@ -37,13 +37,14 @@
   </div>
 </div>
 
+  <EditProjectBtn :model="model"/>
 
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-
+import EditProjectBtn from "./../components/EditProject.vue"
 
 
 
