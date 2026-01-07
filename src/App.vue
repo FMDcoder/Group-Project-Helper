@@ -6,6 +6,8 @@
       <router-link to="/taskboard" class="nav-link">Taskboard</router-link>
     </div>
 
+    {{results}}
+
     <!-- optional: small debug button / area -->
     <Dropdown 
       :options="dropdownOptions" 
