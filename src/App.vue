@@ -7,6 +7,11 @@
     </div>
 
     <!-- optional: small debug button / area -->
+    <Dropdown 
+      :options="dropdownOptions" 
+      @option-selected="handleOptionSelected" 
+      placeholder="Choose a fruit"
+    />
       <button
       class="nav-link nav-debug"
       @click="showDebug = !showDebug"
@@ -22,15 +27,22 @@
 </template>
 
 <script>
-import GroupProjectHelperModel from './model.js'
+import GroupProjectHelperModel from './model.js';
+import Dropdown from './components/Dropdown.vue';
 
   export default {
+    components: { Dropdown },
     data() {
       return {
         model: new GroupProjectHelperModel(this.reRender.bind(this)),
         reRenderKey: 0,
         results: [],
-        showDebug: false
+        showDebug: false,
+        dropdownOptions: [
+          { label: "Apple", value: "apple" },
+          { label: "Banana", value: "banana" },
+          { label: "Cherry", value: "cherry" }
+        ]
       }
     },
     async mounted() {
@@ -44,6 +56,9 @@ import GroupProjectHelperModel from './model.js'
       async setupDatabase() {
         await this.model.setupDatabase();
         this.results = await this.model.testDatabase();
+      },
+      handleOptionSelected(option) {
+        console.log("Selected option:", option);
       }
     }
   }
