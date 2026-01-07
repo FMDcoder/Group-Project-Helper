@@ -89,14 +89,95 @@ class GroupProjectHelperModel {
 
     async testDatabase() {
       // Create a table
-      this.db.run("CREATE TABLE users (id INTEGER, name TEXT);");
+        this.db.run("PRAGMA foreign_keys = ON;");
 
-      // Insert some data
-      this.db.run("INSERT INTO users VALUES (1, 'Alice');");
-      this.db.run("INSERT INTO users VALUES (2, 'Bob');");
+        this.db.run(`
+            CREATE TABLE user (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            namn TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+            );
+        `);
 
-      // Query data
-      const res = this.db.exec("SELECT * FROM users;");
+        this.db.run(`
+            CREATE TABLE project (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            beskrivning TEXT
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE projectUser (
+            userid INTEGER NOT NULL,
+            projectid INTEGER NOT NULL,
+            isMember INTEGER NOT NULL DEFAULT 1,
+            PRIMARY KEY (userid, projectid),
+            FOREIGN KEY (userid) REFERENCES user(id) ON DELETE CASCADE,
+            FOREIGN KEY (projectid) REFERENCES project(id) ON DELETE CASCADE
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            projectid INTEGER NOT NULL,
+            userid INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            FOREIGN KEY (projectid) REFERENCES project(id) ON DELETE CASCADE,
+            FOREIGN KEY (userid) REFERENCES user(id) ON DELETE CASCADE
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE meetings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            projectid INTEGER NOT NULL,
+            time DATETIME NOT NULL,
+            FOREIGN KEY (projectid) REFERENCES project(id) ON DELETE CASCADE
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE userMeeting (
+            userid INTEGER NOT NULL,
+            meetingid INTEGER NOT NULL,
+            PRIMARY KEY (userid, meetingid),
+            FOREIGN KEY (userid) REFERENCES user(id) ON DELETE CASCADE,
+            FOREIGN KEY (meetingid) REFERENCES meetings(id) ON DELETE CASCADE
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            value INTEGER NOT NULL
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            beskriving TEXT,
+            deadline DATETIME,
+            projectid INTEGER NOT NULL,
+            status INTEGER NOT NULL,
+            FOREIGN KEY (projectid) REFERENCES project(id) ON DELETE CASCADE,
+            FOREIGN KEY (status) REFERENCES status(id)
+            );
+        `);
+
+        this.db.run(`
+            CREATE TABLE taskUser (
+            userid INTEGER NOT NULL,
+            taskid INTEGER NOT NULL,
+            PRIMARY KEY (userid, taskid),
+            FOREIGN KEY (userid) REFERENCES user(id) ON DELETE CASCADE,
+            FOREIGN KEY (taskid) REFERENCES tasks(id) ON DELETE CASCADE
+            );
+        `);
       
       // The results are in res[0].values
       return res[0].values;
