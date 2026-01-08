@@ -53,10 +53,8 @@ const DATABASE = [
     deadline DATETIME,
     projectId INTEGER NOT NULL,
     status INTEGER NOT NULL,
-    assignedTo INTEGER,
     FOREIGN KEY (projectId) REFERENCES project(id) ON DELETE CASCADE,
-    FOREIGN KEY (status) REFERENCES status(id),
-    FOREIGN KEY (assignedTo) REFERENCES user(id)
+    FOREIGN KEY (status) REFERENCES status(id)
     );`,
     `CREATE TABLE taskUser (
     userId INTEGER NOT NULL,
@@ -66,18 +64,6 @@ const DATABASE = [
     FOREIGN KEY (taskId) REFERENCES task(id) ON DELETE CASCADE
     );`,
 ]
-
-function sqlToJs(sq) {
-    let l = [];
-    let cols = sq[0].columns;
-    function zipToObj(row) {
-        let obj = {};
-        cols.forEach((e, i) => { obj[e] = row[i]} );
-        return obj;
-    }
-    sq[0].values.forEach(row => l.push(zipToObj(row)));
-    return l;
-}
 
 const MOCK_DATA = {
     'user': [
@@ -90,7 +76,8 @@ const MOCK_DATA = {
         ['HCI project', 'for the course DT137G',],
         ['Exam concert', 'rock and blues'],
         ['Final project ML', 'for Machine learning course'],
-        ['Presentation', 'in other course']
+        ['Presentation', 'in the other course...'],
+        ['Book review seminar', 'Discuss the book ...'],
     ],
     'task': [
         //name TEXT NOT NULL,
@@ -98,22 +85,60 @@ const MOCK_DATA = {
         //deadline DATETIME, - YYYY-MM-DD HH:MI:SS
         //projectId INTEGER NOT NULL,
         //status INTEGER NOT NULL,
-        //assignedTo INTEGER
-        ['Start view', '...', '2026-01-10 22:00:00', 1, 2, 1],
-        ['Project view', '...', '2026-01-11 23:59:59', 1, 1, 1],
-        ['Task board view', '...', '2026-01-10 23:59:59', 1, 1, 1],
-        ['Learn songs', 'Learn the keyboard parts of the songs', '2026-03-15 10:00:00', 2, 1, 1],
+        ['Start view', '...', '2026-01-10 22:00:00', 1, 2],
+        ['Project view', '...', '2026-01-10 23:59:59', 1, 1],
+        ['Task board view', '...', '2026-01-10 23:59:59', 1, 1],
+        ['Learn songs', 'Learn the keyboard parts of the songs', '2026-03-15 10:00:00', 2, 1],
+        ['Read the book', 'Well, what are you waiting for?', '2026-02-24 11:00:00', 5, 2],
     ],
     'status': [
         ['To do', 0],
         ['In progress', 1],
         ['Done', 5]
-    ]
+    ],
+    'projectUser': [
+        //[userId, projectId]
+        [1, 1],
+        [1, 2],
+        [1, 3],
+        [1, 5],
+        [2, 1],
+        [2, 5],
+        [3, 1],
+        [3, 5],
+        [4, 1],
+        [4, 5],
+    ],
+    'taskUser': [
+        //[userId, taskId]
+        [1, 1],
+        [1, 2],
+        [4, 2],
+        [1, 4],
+        [1, 5],
+        [2, 5],
+        [3, 5],
+        [4, 5],
+    ],
+}
+
+function sqlToJs(sq) {
+    if (sq.length <= 0) { return [] };
+
+    let l = [];
+    let cols = sq[0].columns;
+    function zipToObj(row) {
+        let obj = {};
+        cols.forEach((e, i) => { obj[e] = row[i]} );
+        return obj;
+    }
+    sq[0].values.forEach(row => l.push(zipToObj(row)));
+    return l;
 }
 
 class GroupProjectHelperModel {
     constructor(listener) {
-        this.currentProject = { name: 'placeholder project' };
+        this.currentProject = null;
         this.observers = [listener];
         this.currentUser = { name: 'placeholder user', id: 1};
         this.dbReady = false;
@@ -167,16 +192,22 @@ class GroupProjectHelperModel {
             s => this.db.run(`INSERT INTO status (name, value) VALUES ("${s[0]}", ${s[1]})`)
         );
         
-        let currentProject = this.db.exec(`SELECT * FROM project WHERE name = "${MOCK_DATA.project[0][0]}"`);
-        this.currentProject = sqlToJs(currentProject)[0];
+        //let currentProject = this.db.exec(`SELECT * FROM project WHERE name = "${MOCK_DATA.project[0][0]}"`);
+        //this.currentProject = sqlToJs(currentProject)[0];
         
-        this.getProjects().forEach(row => console.log(row.id));
-
         MOCK_DATA.task.forEach(
             t => this.db.run(
-                `INSERT INTO task (name, description, deadline, projectId, status, assignedTo)\
-                 VALUES ("${t[0]}", "${t[1]}", "${t[2]}", ${t[3]}, ${t[4]}, ${t[5]});`
+                `INSERT INTO task (name, description, deadline, projectId, status)
+                 VALUES ("${t[0]}", "${t[1]}", "${t[2]}", ${t[3]}, ${t[4]});`
             )
+        );
+
+        MOCK_DATA.projectUser.forEach(
+            pu => this.db.run( `INSERT INTO projectUser (userId, projectId) VALUES (${pu[0]}, ${pu[1]})`)
+        );
+        
+        MOCK_DATA.taskUser.forEach(
+            tu => this.db.run( `INSERT INTO taskUser (userId, taskId) VALUES (${tu[0]}, ${tu[1]})`)
         );
         
         this.dbReady = true;
@@ -194,16 +225,20 @@ class GroupProjectHelperModel {
     }
     
     getUserProjects() {
-        return sqlToJs(this.db.exec(`SELECT * FROM project WHERE userId=${this.currentUser.id}`));
+        return sqlToJs(this.db.exec(
+            `SELECT * FROM project, projectUser
+            WHERE id = projectId
+            AND userId=${this.currentUser.id}`
+        ));
     }
     
     getCurrentProject() {
-        return this.getProject(this.currentProject);
+        return this.currentProject;
     }
     
     getProject(projectID) {
         //return this.projects.find(p => p.id == projectID);
-        if (this.currentProject.length >= 0) { return {} }
+        if (this.currentProject != null) { return {} }
         return this.currentProject;
     }
     
@@ -221,25 +256,48 @@ class GroupProjectHelperModel {
     
     getTasksByDeadline() {
         return sqlToJs(this.db.exec(
-            `SELECT task.id, task.name, deadline, project.name AS projectName FROM task, project
+            `SELECT task.id, task.name, deadline, project.name AS projectName, project.id AS projectId
+            FROM task, project, taskUser
             WHERE task.projectId = project.id
-            AND assignedTo=${this.currentUser.id}
+            AND task.id = taskUser.taskId
+            AND taskUser.userId = ${this.currentUser.id}
             ORDER BY deadline`)
         );
     }
 
-    getProjectTasksByDeadline(projectName) {
+    getProjectTasksByDeadline() {
         return sqlToJs(this.db.exec(
-            `SELECT task.id, task.name, deadline, project.name AS projectName FROM task, project
+            `SELECT task.id, task.name, deadline, project.name AS projectName
+            FROM task, project, taskUser
             WHERE task.projectId = project.id
-            AND assignedTo=${this.currentUser.id}
-            AND project=${this.currentProject.id}
+            AND project.id=${this.currentProject.id}
+            AND task.id = taskUser.taskId
+            AND taskUser.userId = ${this.currentUser.id}
             ORDER BY deadline`));
     }
     
     // setters
     setCurrentProject(id) {
-        this.currentProjectID = id;
+        if (!this.currentProject || id != this.currentProject.id) {
+            let currentProject = this.db.exec(`SELECT * FROM project WHERE id = ${id}`);
+            this.currentProject = sqlToJs(currentProject)[0];
+        }
+    }
+    
+    createProject(details) {
+        this.db.run(`INSERT INTO project (name, description)
+            VALUES ("${details.name}", "${details.desc}")`);
+        let projectId = sqlToJs(this.db.exec(`SELECT id FROM project
+            WHERE name = "${details.name}"`))[0].id;
+        //console.log(projectId);
+
+        this.db.run(`INSERT INTO projectUser (userId, projectId)
+            VALUES (${this.currentUser.id}, ${projectId})`);
+        //console.log(sqlToJs(this.db.exec(`SELECT * FROM projectUser`)));
+        
+        this.currentProject = sqlToJs(this.db.exec(`SELECT * FROM project
+            WHERE id = ${projectId}`));
+        this.notifyObservers();
     }
 }
 export default GroupProjectHelperModel

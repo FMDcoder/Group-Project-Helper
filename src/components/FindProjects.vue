@@ -1,6 +1,6 @@
 <template>
   <div class="projects">
-    <h2>Active projects:</h2>
+    <h4>Find project:</h4>
     <input
       type="text"
       v-model="searchQuery"
@@ -69,6 +69,7 @@
 
 input {
   width: 100%;
+  box-sizing: border-box;
   padding: 8px;
   margin-bottom: 12px;
 }

@@ -4,19 +4,29 @@
       + New project
     </button>
 
-    <div v-if="show" class="modal-backdrop" @click.self="closeModal">
+    <div v-show="show" class="modal-backdrop" @click.self="closeModal">
       <div class="modal">
         <h3>New project</h3>
 
         <label class="field">
           Project name
-          <input v-model.trim="form.name" type="text" placeholder="e.g. Web app" />
+          <input v-model.trim="form.name" type="text" placeholder="Project name..." ref="projectNameInput"/>
         </label>
 
         <label class="field">
+          Description
+          <textarea
+            v-model.trim="form.desc"
+            type="text"
+            rows="4"
+            cols="50"
+            placeholder="Short description of the project..." />
+        </label>
+
+        <!--label class="field">
           Deadline
           <input v-model="form.deadline" type="date" />
-        </label>
+        </label-->
 
         <div class="actions">
           <button class="btn primary" @click="confirm">OK</button>
@@ -33,6 +43,7 @@
 export default {
   name: "NewProjBtn",
   emits: ["project-created"],
+  props: ['model'],
   data() {
     return {
       show: false,
@@ -47,6 +58,7 @@ export default {
     openModal() {
       this.show = true;
       this.error = "";
+      this.$refs.projectNameInput.focus();
     },
     closeModal() {
       this.show = false;
@@ -54,18 +66,20 @@ export default {
       this.form = { name: "", deadline: "" };
     },
     confirm() {
-      if (!this.form.name || !this.form.deadline) {
-        this.error = "Fill in both name and deadline.";
+      if (!this.form.name || !this.form.desc) {
+        this.error = "Fill in both name and description.";
         return;
       }
 
-      const project = {
-        id: Date.now(),             // replace with DB id if you use backend
+      const projectDetails = {
+        //id: Date.now(),             // replace with DB id if you use backend
         name: this.form.name,
-        deadline: this.form.deadline
+        desc: this.form.desc,
+        //deadline: this.form.deadline
       };
 
-      this.$emit("project-created", project);
+      //this.$emit("project-created", project);
+      this.model.createProject(projectDetails);
       this.closeModal();
     }
   }
@@ -98,8 +112,9 @@ export default {
   z-index: 100;
 }
 .modal{
-  width: 340px;
+  width: 50%;
   background: white;
+  color: black;
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 12px 35px rgba(0,0,0,0.25);
@@ -109,9 +124,10 @@ export default {
   margin: 0.75rem 0;
   font-weight: 600;
 }
-.field input{
+.field input, textarea{
   display: block;
   width: 100%;
+  box-sizing: border-box;
   margin-top: 0.35rem;
   padding: 0.5rem 0.6rem;
 }

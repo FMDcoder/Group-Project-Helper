@@ -1,50 +1,59 @@
 <template>
   <section>
-    <h1>Project Overview</h1>
+    <div v-if="projectSelected()">
+      <h1>Project Overview</h1>
 
-    <p>Deadline: {{ project.deadline }}</p>
-    <progress :value="project.progress" max="100"></progress>
+      <p>Deadline: {{ project.deadline }}</p>
+      <progress :value="project.progress" max="100"></progress>
 
-    <h2>Möten</h2>
-    <ul>
-      <li v-for="m in meetings" :key="m.id">
-        {{ m.title }} – {{ m.date }}
-        <button @click="removeMeeting(m.id)">Ta bort</button>
-      </li>
-    </ul>
+      <Deadlines :model="model" :current-project-only="true" />
+      <h2>Möten</h2>
+      <ul>
+        <li v-for="m in meetings" :key="m.id">
+          {{ m.title }} – {{ m.date }}
+          <button @click="removeMeeting(m.id)">Ta bort</button>
+        </li>
+      </ul>
 
-    <button @click="openModal">Lägg till möte</button>
+      <button @click="openModal">Lägg till möte</button>
 
-<!-- MODAL -->
-<div v-if="showModal" class="modal-backdrop">
-  <div class="modal">
-    <h3>Nytt möte</h3>
+      <!-- MODAL -->
+      <div v-if="showModal" class="modal-backdrop">
+        <div class="modal">
+          <h3>Nytt möte</h3>
+      
+          <label>
+            Namn
+            <input v-model="newMeeting.title" type="text" />
+          </label>
+      
+          <label>
+            Deadline
+            <input v-model="newMeeting.date" type="date" />
+          </label>
+      
+          <div class="modal-actions">
+            <button @click="confirmAdd">OK</button>
+            <button @click="closeModal">Avbryt</button>
+          </div>
+        </div>
+      </div>
 
-    <label>
-      Namn
-      <input v-model="newMeeting.title" type="text" />
-    </label>
-
-    <label>
-      Deadline
-      <input v-model="newMeeting.date" type="date" />
-    </label>
-
-    <div class="modal-actions">
-      <button @click="confirmAdd">OK</button>
-      <button @click="closeModal">Avbryt</button>
+      <EditProjectBtn :model="model" />
     </div>
-  </div>
-</div>
-
-  <EditProjectBtn :model="model"/>
-
+    <div v-else>
+      <h1>Select a project</h1>
+      <h3>Please select one of Your projects below to view its details</h3>
+      <UserProjects :model="props.model" :redirect="false" />
+    </div>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import EditProjectBtn from "./../components/EditProject.vue"
+import Deadlines from "@/components/Deadlines.vue";
+import UserProjects from "@/components/UserProjects.vue";
 
 const props = defineProps(['model']);
 
@@ -75,6 +84,10 @@ function confirmAdd() {
   });
 
   closeModal();
+}
+
+function projectSelected() {
+  return props.model.getCurrentProject() != null;
 }
 
 

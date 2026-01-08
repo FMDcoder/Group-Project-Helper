@@ -1,5 +1,5 @@
 <template>
-  <div v-if="this.dbReady">
+  <div v-if="this.dbReady" :key="this.reRenderKey">
   <nav class="topnav">
     <div class="nav-left">
       <router-link to="/" class="nav-link">Startsidan</router-link>
@@ -13,14 +13,15 @@
     <Dropdown 
       :options="dropdownOptions" 
       @option-selected="handleOptionSelected" 
-      placeholder="Choose a fruit"
+      placeholder="Select project"
+      :model="model"
     />
-      <button
+      <!--button
       class="nav-link nav-debug"
       @click="showDebug = !showDebug"
     >
       {{ showDebug ? "Hide Projects" : "Show Projects" }}
-  </button>
+  </button-->
 
   </nav>
 

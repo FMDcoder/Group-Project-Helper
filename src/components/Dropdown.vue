@@ -6,31 +6,35 @@
       aria-haspopup="true"
       :aria-expanded="isOpen"
     >
-      Projects: {{ selectedOption || placeholder }} ▼
+      {{ getCurrentProjectName() || placeholder }} ▼
     </button>
 
-    <ul v-if="isOpen" class="dropdown-menu">
-      <li
+    <div v-if="isOpen" class="dropdown-menu">
+      <UserProjects :model="model" :redirect="false" />
+      <!--li
         v-for="option in options"
         :key="option.value"
         @click="setOption(option)"
       >
         {{ option.label }}
-      </li>
+      </li-->
 
       <!-- action row -->
-      <li class="menu-action">
-        <NewProjBtn @project-created="onProjectCreated" />
-      </li>
-    </ul>
+      <ul class="menu-action">
+        <li>
+          <NewProjBtn :model="this.model" @project-created="onProjectCreated" />
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
 import NewProjBtn from "./NewProjBtn.vue";
+import UserProjects from "./UserProjects.vue";
 
 export default {
-  components: { NewProjBtn },
+  components: { NewProjBtn, UserProjects },
 
   props: ["model", "options", "placeholder"],
 
@@ -58,6 +62,10 @@ export default {
 
       // bubble up so App.vue (or whoever owns the array) can push it into the list
       this.$emit("project-created", project);
+    },
+    getCurrentProjectName() {
+      let project = this.model.getCurrentProject();
+      return project ? project.name : false;
     }
   }
 };
@@ -91,14 +99,18 @@ export default {
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
-.dropdown-menu li {
+.dropdown-menu >>> ul {
+  list-style: none;
+}
+
+.dropdown-menu > ul li, .dropdown-menu >>> ul li {
   padding: 0.6rem 1rem;
   cursor: pointer;
   color: #e5e7eb;
   font-weight: 600;
   transition: background-color 120ms ease;
 }
-.dropdown-menu li:hover { background-color: #2563eb; color: white; }
+.dropdown-menu >>> ul > li:hover { background-color: #2563eb; color: white; }
 
 .menu-action {
   padding: 0.5rem 0.75rem;
