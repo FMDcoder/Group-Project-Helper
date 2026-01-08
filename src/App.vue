@@ -1,4 +1,5 @@
 <template>
+  <div v-if="this.dbReady">
   <nav class="topnav">
     <div class="nav-left">
       <router-link to="/" class="nav-link">Startsidan</router-link>
@@ -25,7 +26,8 @@
 
   <pre v-if="showDebug" class="debug">{{ results }}</pre>
 
-  <router-view :model="model" :reRenderKey="reRenderKey" />
+    <router-view :model="model" :reRenderKey="reRenderKey" />
+  </div>
 </template>
 
 <script>
@@ -38,6 +40,7 @@ import Dropdown from './components/Dropdown.vue';
       return {
         model: new GroupProjectHelperModel(this.reRender.bind(this)),
         reRenderKey: 0,
+        dbReady: false,
         results: [],
         showDebug: false,
         dropdownOptions: [
@@ -47,7 +50,7 @@ import Dropdown from './components/Dropdown.vue';
         ]
       }
     },
-    async mounted() {
+    async created() {
       // Run database setup when page loads
       await this.setupDatabase();
     },
@@ -57,7 +60,8 @@ import Dropdown from './components/Dropdown.vue';
       },
       async setupDatabase() {
         await this.model.setupDatabase();
-        this.results = await this.model.testDatabase();
+        this.results = this.model.testDatabase();
+        this.dbReady = this.model.dbReady;
       },
       handleOptionSelected(option) {
         console.log("Selected option:", option);

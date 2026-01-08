@@ -5,13 +5,11 @@
       <li v-for="t in getTasks()" :key="t.id">
         {{ t.deadline }} {{ t.title }}
 
-        <div v-if="hasProject()">
           <ul>
             <li>
-              {{ getProjectName(t.project) }}
+              {{ t.projectName }}
             </li>
           </ul>
-        </div>
 
       </li>
     </ul>
