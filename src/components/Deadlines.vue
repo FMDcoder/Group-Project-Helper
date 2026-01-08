@@ -3,7 +3,7 @@
     <h2>Upcoming Deadlines:</h2>
     <ul>
       <li v-for="t in getTasks()" :key="t.id">
-        {{ t.deadline }} {{ t.title }}
+        {{ t.deadline }} {{ t.name }}
 
           <ul>
             <li>
