@@ -46,7 +46,7 @@
 import { ref, onMounted } from "vue";
 import EditProjectBtn from "./../components/EditProject.vue"
 
-
+const props = defineProps(['model']);
 
 const project = ref({});
 const meetings = ref([]);
