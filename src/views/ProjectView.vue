@@ -41,16 +41,16 @@
           </div>
 
           <ul class="meetings">
-            <li v-for="m in meetings" :key="m.id" class="meeting-item">
+            <li v-for="m in getProjectMeetings()" :key="m.id" class="meeting-item">
               <div class="meeting-main">
-                <div class="meeting-title">{{ m.title }}</div>
-                <div class="meeting-date">{{ m.date }}</div>
+                <div class="meeting-title">{{ m.name }}</div>
+                <div class="meeting-date">{{ m.time }}</div>
               </div>
 
               <button class="btn btn-ghost" @click="removeMeeting(m.id)">Delete</button>
             </li>
 
-            <li v-if="meetings.length === 0" class="empty">
+            <li v-if="getProjectMeetings().length === 0" class="empty">
               No meetings yet. Add one below.
             </li>
           </ul>
@@ -191,9 +191,14 @@ function projectSelected() {
   return props.model.getCurrentProject() != null;
 }
 
+function getProjectMeetings() {
+  return props.model.getProjectMeetings()
+}
+
 onBeforeUnmount(() => {
   if (escHandler) window.removeEventListener("keydown", escHandler);
 });
+
 </script>
 
 <style scoped>

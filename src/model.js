@@ -20,7 +20,7 @@ const DATABASE = [
     FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (projectId) REFERENCES project(id) ON DELETE CASCADE
     );`,
-    `CREATE TABLE messages (
+    `CREATE TABLE message (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     projectId INTEGER NOT NULL,
     userId INTEGER NOT NULL,
@@ -28,18 +28,21 @@ const DATABASE = [
     FOREIGN KEY (projectId) REFERENCES project(id) ON DELETE CASCADE,
     FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
     );`,
-    `CREATE TABLE meetings (
+    `CREATE TABLE meeting (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    projectId INTEGER NOT NULL,
+    name TEXT NOT NULL,
     time DATETIME NOT NULL,
+    place TEXT NOT NULL,
+    projectId INTEGER NOT NULL,
     FOREIGN KEY (projectId) REFERENCES project(id) ON DELETE CASCADE
     );`,
     `CREATE TABLE userMeeting (
     userId INTEGER NOT NULL,
     meetingId INTEGER NOT NULL,
+    accepted INTEGER,
     PRIMARY KEY (userId, meetingid),
     FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE,
-    FOREIGN KEY (meetingid) REFERENCES meetings(id) ON DELETE CASCADE
+    FOREIGN KEY (meetingid) REFERENCES meeting(id) ON DELETE CASCADE
     );`,
     `CREATE TABLE status (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,12 +70,14 @@ const DATABASE = [
 
 const MOCK_DATA = {
     'user': [
+        // [name, password]
         ['Joel', ''],
         ['Sawan', ''],
         ['Vanessa', ''],
         ['Mohamad', ''],
     ],
     'project': [
+        // [name, description]
         ['HCI project', 'for the course DT137G',],
         ['Exam concert', 'rock and blues'],
         ['Final project ML', 'for Machine learning course'],
@@ -90,6 +95,10 @@ const MOCK_DATA = {
         ['Task board view', '...', '2026-01-10 23:59:59', 1, 1],
         ['Learn songs', 'Learn the keyboard parts of the songs', '2026-03-15 10:00:00', 2, 1],
         ['Read the book', 'Well, what are you waiting for?', '2026-02-24 11:00:00', 5, 2],
+    ],
+    'meeting': [
+        // [name, time, place, projectId]
+        ['Coding', '2026-01-10 20:00:00', 'Discord', 1],
     ],
     'status': [
         ['To do', 0],
@@ -188,6 +197,10 @@ class GroupProjectHelperModel {
             p => this.db.run(`INSERT INTO project (name, description) VALUES ("${p[0]}", "${p[1]}");`)
         );
         
+        MOCK_DATA.projectUser.forEach(
+            pu => this.db.run( `INSERT INTO projectUser (userId, projectId) VALUES (${pu[0]}, ${pu[1]})`)
+        );
+        
         MOCK_DATA.status.forEach(
             s => this.db.run(`INSERT INTO status (name, value) VALUES ("${s[0]}", ${s[1]})`)
         );
@@ -202,12 +215,16 @@ class GroupProjectHelperModel {
             )
         );
 
-        MOCK_DATA.projectUser.forEach(
-            pu => this.db.run( `INSERT INTO projectUser (userId, projectId) VALUES (${pu[0]}, ${pu[1]})`)
+        MOCK_DATA.taskUser.forEach(
+            tu => this.db.run(`INSERT INTO taskUser (userId, taskId) VALUES (${tu[0]}, ${tu[1]})`)
         );
         
-        MOCK_DATA.taskUser.forEach(
-            tu => this.db.run( `INSERT INTO taskUser (userId, taskId) VALUES (${tu[0]}, ${tu[1]})`)
+        MOCK_DATA.meeting.forEach(
+            (m, i) => {
+                this.db.exec(`INSERT INTO meeting (name, time, place, projectId)
+                    VALUES ("${m[0]}", "${m[1]}", "${m[2]}", ${m[3]})`)
+                this._addUsersToMeeting(i + 1, m[3]);
+            }
         );
         
         this.dbReady = true;
@@ -228,7 +245,8 @@ class GroupProjectHelperModel {
         return sqlToJs(this.db.exec(
             `SELECT * FROM project, projectUser
             WHERE id = projectId
-            AND userId=${this.currentUser.id}`
+            AND userId=${this.currentUser.id}
+            ORDER BY name`
         ));
     }
     
@@ -244,14 +262,6 @@ class GroupProjectHelperModel {
     
     getProjectTasks(projectID) {
         console.log( this.db.exec(`SELECT * FROM task WHERE projectId=${this.currentProject.id}`));
-    }
-    
-    getUserTasks() {
-        return ["do something", "and more"] //this.projects
-            //.map(p => p.task.
-            //    map(t => ({ ...t, project: p.id }))
-            //).flat()
-            //.filter(t => t.assignedTo === this.userID);
     }
     
     getTasksByDeadline() {
@@ -276,6 +286,14 @@ class GroupProjectHelperModel {
             ORDER BY deadline`));
     }
     
+    getProjectMeetings() {
+        if (this.currentProject == null) { return [] };
+        return sqlToJs(this.db.exec(
+            `SELECT id, name, time, place FROM meeting
+            WHERE projectId = ${this.currentProject.id}`)
+        );
+    }
+    
     // setters
     setCurrentProject(id) {
         if (!this.currentProject || id != this.currentProject.id) {
@@ -289,15 +307,38 @@ class GroupProjectHelperModel {
             VALUES ("${details.name}", "${details.desc}")`);
         let projectId = sqlToJs(this.db.exec(`SELECT id FROM project
             WHERE name = "${details.name}"`))[0].id;
-        //console.log(projectId);
 
         this.db.run(`INSERT INTO projectUser (userId, projectId)
             VALUES (${this.currentUser.id}, ${projectId})`);
-        //console.log(sqlToJs(this.db.exec(`SELECT * FROM projectUser`)));
         
-        this.currentProject = sqlToJs(this.db.exec(`SELECT * FROM project
-            WHERE id = ${projectId}`));
+        this.setCurrentProject(projectId);
         this.notifyObservers();
+    }
+   
+    // name TEXT NOT NULL,
+    // time DATETIME NOT NULL,
+    // place TEXT NOT NULL,
+    // projectId INTEGER NOT NULL,
+    createMeeting(details) {
+        this.db.run(`INSERT INTO meeting (name, place, time, projectId)
+            VALUES ("${details.name}", "${details.time}", "${details.place}", ${this.currentProject.id})`
+        );
+        
+        let meetingId = sqlToJs(this.db.exec(`SELECT id FROM meeting
+            WHERE name = "${details.name}"`))[0].id;
+        
+        this._addUsersToMeeting(meetingId, this.currentProject.id);
+    }
+    
+    _addUsersToMeeting(meetingId, projectId) {
+        let users = sqlToJs(this.db.exec(`SELECT userId FROM projectUser
+            WHERE projectId = ${projectId}
+            AND isMember = 1`));
+        
+        users.forEach(u => this.db.run(
+            `INSERT INTO userMeeting (userId, meetingId)
+            VALUES (${u.userId}, ${meetingId})`)
+        );
     }
 }
 export default GroupProjectHelperModel
