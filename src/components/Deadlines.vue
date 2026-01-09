@@ -41,15 +41,24 @@ export default {
 
       // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM"
       // Convert to ISO: "YYYY-MM-DDTHH:MM:SS"
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
       // If date parsing fails, fall back to trimming seconds
       if (isNaN(deadline.getTime())) {
         return deadline.length >= 16 ? deadline.slice(0, 16) : deadline;
       }
 
-      let year = deadline < oneYearFromNow ? "" : deadline.getFullYear();
+      const checkFutureYear = new Date();
+      const checkFutureWeek = new Date();
+      const checkFutureDay  = new Date();
+      const now = new Date().getTime();
+      checkFutureYear.setFullYear(checkFutureYear.getFullYear() + 1);
+      checkFutureWeek.setDate(checkFutureWeek.getDate() + 7);
+      checkFutureDay.setDate(checkFutureDay.getDate() + 1);
+      
+      console.log(checkFutureDay - deadline);
+
+      const year = deadline < checkFutureYear ? "" : deadline.getFullYear();
+
       const monthDay = deadline.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
@@ -59,8 +68,20 @@ export default {
         hour: "2-digit",
         minute: "2-digit",
       }); // e.g. "22:00"
+      
+      let timeLeft = "";
+      let diff = 0;
+      if (deadline < checkFutureDay) {
+        diff = Math.floor(
+          (deadline.getTime() - now) % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
+        timeLeft = ` (in ${diff} hours)`
+      }
+      else if (deadline < checkFutureWeek) {
+        diff = Math.floor((deadline.getTime() - now) / (1000 * 60 * 60 * 24));
+        timeLeft = ` (in ${diff} day${diff == 1 ? "" : "s"})`
+      }
 
-      return `${year} ${monthDay}, ${time}`;
+      return `${year} ${monthDay}, ${time}${timeLeft}`;
     },
 
     setCurrentProject(projectId) {
