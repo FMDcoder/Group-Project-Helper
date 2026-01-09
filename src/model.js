@@ -98,6 +98,7 @@ const MOCK_DATA = {
     ],
     'meeting': [
         // [name, time, place, projectId]
+        ['Prepare presentation', '2026-01-11 16:00:00', 'Discord', 1],
         ['Coding', '2026-01-10 20:00:00', 'Discord', 1],
     ],
     'status': [
@@ -290,15 +291,16 @@ class GroupProjectHelperModel {
         if (this.currentProject == null) { return [] };
         return sqlToJs(this.db.exec(
             `SELECT id, name, time, place FROM meeting
-            WHERE projectId = ${this.currentProject.id}`)
+            WHERE projectId = ${this.currentProject.id}
+            ORDER BY time`)
         );
     }
     
     // setters
-    setCurrentProject(id) {
-        if (!this.currentProject || id != this.currentProject.id) {
-            let currentProject = this.db.exec(`SELECT * FROM project WHERE id = ${id}`);
-            this.currentProject = sqlToJs(currentProject)[0];
+    setCurrentProject(id, force=false) {
+        if (!this.currentProject || (force || id != this.currentProject.id)) {
+            let newProject = this.db.exec(`SELECT * FROM project WHERE id = ${id}`);
+            this.currentProject = sqlToJs(newProject)[0];
         }
     }
     
@@ -313,6 +315,15 @@ class GroupProjectHelperModel {
         
         this.setCurrentProject(projectId);
         this.notifyObservers();
+    }
+    
+    updateProject(details) {
+        const projectId = this.currentProject.id;
+        this.db.run(`UPDATE project
+            SET name = "${details.name}", description = "${details.desc}"
+            WHERE id = ${projectId}`);
+        this.setCurrentProject(projectId, true);
+        //this.notifyObservers();
     }
    
     // name TEXT NOT NULL,

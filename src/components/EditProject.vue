@@ -108,6 +108,13 @@ export default {
 
     submit() {
       if (this.isSaveDisabled) return;
+      
+      const projectDetails = {
+        name: this.projectName,
+        desc: this.projectDescription
+      }
+      
+      this.model.updateProject(projectDetails);
 
       // TODO later: save to model/database
       // Example: this.model.updateProject({ name: this.projectName, description: this.projectDescription })
