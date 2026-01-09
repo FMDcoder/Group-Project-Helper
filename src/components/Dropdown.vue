@@ -72,7 +72,10 @@ export default {
 </script>
 
 <style scoped>
-.dropdown { position: relative; display: inline-block; }
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
 
 .dropdown-toggle {
   background-color: #2563eb;
@@ -85,7 +88,10 @@ export default {
   cursor: pointer;
   transition: background-color 120ms ease, transform 120ms ease;
 }
-.dropdown-toggle:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+.dropdown-toggle:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
 
 .dropdown-menu {
   position: absolute;
@@ -93,28 +99,58 @@ export default {
   right: 0;
   background: #484b53;
   border-radius: 12px;
-  padding: 0.25rem 0;
-  min-width: 220px;
+  padding: 0.4rem 0.55rem; /* a bit tighter */
+  min-width: 240px;
   z-index: 50;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
-.dropdown-menu >>> ul {
+/* Reset list styling inside dropdown */
+.dropdown-menu :deep(ul) {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.dropdown-menu > ul li, .dropdown-menu >>> ul li {
-  padding: 0.6rem 1rem;
-  cursor: pointer;
-  color: #e5e7eb;
-  font-weight: 600;
-  transition: background-color 120ms ease;
-}
-.dropdown-menu >>> ul > li:hover { background-color: #2563eb; color: white; }
+/* ---- Project items (white boxes) ---- */
+.dropdown-menu :deep(.projects .project-item) {
+  padding: 6px 10px;      /* ✅ shorter */
+  margin: 6px 0;          /* ✅ less spacing */
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
 
+  color: #1b3564;         /* ✅ darker text */
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Hover on project items */
+.dropdown-menu :deep(.projects .project-item:hover) {
+  background: rgba(127, 162, 228, 0.18);
+  transform: none;        /* keep stable in dropdown */
+  box-shadow: none;
+}
+
+/* Keyboard focus */
+.dropdown-menu :deep(.projects .project-item:focus-visible) {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+  background: rgba(37, 99, 235, 0.22);
+}
+
+/* ---- Action row (New project) ---- */
 .menu-action {
-  padding: 0.5rem 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.15);
+  padding: 0.55rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
   cursor: default;
 }
+
+/* Keep action list text readable on dark background */
+.dropdown-menu :deep(.menu-action li) {
+  padding: 0;
+  margin: 0;
+  color: #e5e7eb;
+}
+
 </style>
