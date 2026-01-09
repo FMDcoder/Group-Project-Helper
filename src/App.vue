@@ -2,8 +2,8 @@
   <div v-if="this.dbReady" :key="this.reRenderKey">
   <nav class="topnav">
     <div class="nav-left">
-      <router-link to="/" class="nav-link">Startsidan</router-link>
-      <router-link to="/project" class="nav-link">Projekt</router-link>
+      <router-link to="/" class="nav-link">Startpage</router-link>
+      <router-link to="/project" class="nav-link">Project</router-link>
       <router-link to="/taskboard" class="nav-link">Taskboard</router-link>
     </div>
 
@@ -78,7 +78,7 @@ import Dropdown from './components/Dropdown.vue';
     justify-content: space-between;
   
     padding: 0.9rem 1.2rem;
-    background: #b2baca;          /* dark navbar */
+    background: #91a1c2;          /* dark navbar */
     border-bottom: 3px solid #374151;
   }
   
