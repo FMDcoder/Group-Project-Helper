@@ -18,6 +18,7 @@
 <script>
 export default {
   props: ["model", "redirect"],
+  emits: ["project-selected"],
   methods: {
     getUserProjects() {
       return this.model.getUserProjects();
@@ -26,6 +27,9 @@ export default {
       this.model.setCurrentProject(id);
       if (this.redirect == true) {
         this.$router.push("/project");
+      }
+      else {
+        this.$emit("project-selected");
       }
     },
   },

@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown">
+  <div ref="theBox" class="dropdown">
     <button
       class="dropdown-toggle"
       @click="toggleDropdown"
@@ -10,7 +10,7 @@
     </button>
 
     <div v-if="isOpen" class="dropdown-menu">
-      <UserProjects :model="model" :redirect="false" />
+      <UserProjects :model="model" :redirect="false" @project-selected="closeBox" />
       <!--li
         v-for="option in options"
         :key="option.value"
@@ -66,7 +66,28 @@ export default {
     getCurrentProjectName() {
       let project = this.model.getCurrentProject();
       return project ? project.name : false;
+    },
+    clickoutside(event)
+    {
+      const box=this.$refs.theBox
+      if(this.isOpen && box && !box.contains(event.target)){
+        this.isOpen = false
+      }
+    },
+    closeBox()
+    {
+      const box=this.$refs.theBox
+      if(this.isOpen && box) {
+        this.isOpen = false
+      }
     }
+  },
+  mounted(){
+    document.addEventListener("click",this.clickoutside)
+  },
+
+  beforeUnmount(){
+    document.removeEventListener("click", this.clickoutside)
   }
 };
 </script>

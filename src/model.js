@@ -140,10 +140,14 @@ function sqlToJs(sq) {
     if (sq.length <= 0) { return [] };
 
     let l = [];
-    let cols = sq[0].columns;
+    const cols = sq[0].columns;
+    let value;
     function zipToObj(row) {
         let obj = {};
-        cols.forEach((e, i) => { obj[e] = row[i]} );
+        cols.forEach((e, i) => {
+            value = ['deadline', 'time'].includes(e) ? formatDate(row[i]) : row[i];
+            obj[e] = value;
+        } );
         return obj;
     }
     sq[0].values.forEach(row => l.push(zipToObj(row)));
@@ -151,7 +155,7 @@ function sqlToJs(sq) {
 }
 
 function formatDate(date) {
-    
+      return new Date(date.replace(" ", "T"));
 }
 
 class GroupProjectHelperModel {

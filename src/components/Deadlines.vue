@@ -41,23 +41,21 @@ export default {
 
       // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM"
       // Convert to ISO: "YYYY-MM-DDTHH:MM:SS"
-      const iso = deadline.replace(" ", "T");
-      const dt = new Date(iso);
       const oneYearFromNow = new Date();
       oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
       // If date parsing fails, fall back to trimming seconds
-      if (isNaN(dt.getTime())) {
+      if (isNaN(deadline.getTime())) {
         return deadline.length >= 16 ? deadline.slice(0, 16) : deadline;
       }
 
-      let year = dt < oneYearFromNow ? "" : dt.getFullYear();
-      const monthDay = dt.toLocaleDateString("en-US", {
+      let year = deadline < oneYearFromNow ? "" : deadline.getFullYear();
+      const monthDay = deadline.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
       }); // e.g. "Jan 10"
 
-      const time = dt.toLocaleTimeString("en-GB", {
+      const time = deadline.toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
       }); // e.g. "22:00"
