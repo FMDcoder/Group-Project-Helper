@@ -320,7 +320,7 @@ class GroupProjectHelperModel {
     // place TEXT NOT NULL,
     // projectId INTEGER NOT NULL,
     createMeeting(details) {
-        this.db.run(`INSERT INTO meeting (name, place, time, projectId)
+        this.db.run(`INSERT INTO meeting (name, time, place, projectId)
             VALUES ("${details.name}", "${details.time}", "${details.place}", ${this.currentProject.id})`
         );
         

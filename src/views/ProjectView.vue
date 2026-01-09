@@ -2,7 +2,12 @@
   <section class="page">
     <div v-if="projectSelected()">
       <div class="page-header">
-        <h1>Project Overview</h1>
+        <h2>
+          {{ getCurrentProjectName() }}
+          <div class="edit-btn">
+            <EditProjectBtn :model="model" />
+          </div>
+        </h2>
         <p class="subtitle">Manage deadlines, progress and meetings for the current project.</p>
       </div>
 
@@ -57,9 +62,6 @@
 
           <div class="button-row">
             <button class="btn btn-primary" @click="openModal">Add meeting</button>
-            <div class="edit-btn">
-              <EditProjectBtn :model="model" />
-            </div>
           </div>
         </div>
       </div>
@@ -86,6 +88,11 @@
             <label class="field">
               <span class="field-label">Date</span>
               <input v-model="newMeeting.date" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Place</span>
+              <input v-model="newMeeting.place" type="text" />
             </label>
 
             <p v-if="isAddDisabled" class="hint">
@@ -130,7 +137,7 @@ const props = defineProps(["model"]);
 const project = ref({});
 const meetings = ref([]);
 const showModal = ref(false);
-const newMeeting = ref({ title: "", date: "" });
+const newMeeting = ref({ title: "", date: "" , place: ""});
 
 /* ✅ Autofocus reference */
 const meetingNameInput = ref(null);
@@ -139,7 +146,8 @@ const meetingNameInput = ref(null);
 const isAddDisabled = computed(() => {
   return (
     newMeeting.value.title.trim().length === 0 ||
-    newMeeting.value.date.trim().length === 0
+    newMeeting.value.date.trim().length === 0 ||
+    newMeeting.value.place.trim().length === 0
   );
 });
 
@@ -174,11 +182,21 @@ function closeModal() {
 function confirmAdd() {
   if (isAddDisabled.value) return;
 
-  meetings.value.push({
-    id: Date.now(),
-    title: newMeeting.value.title,
-    date: newMeeting.value.date,
-  });
+  const meetingDetails = {
+    //id: Date.now(),             // replace with DB id if you use backend
+    name: newMeeting.value.title,
+    time: newMeeting.value.date,
+    place: newMeeting.value.place,
+    //deadline: this.form.deadline
+  };
+  
+  //meetings.value.push({
+  //  id: Date.now(),
+  //  title: newMeeting.value.title,
+  //  date: newMeeting.value.date,
+  //});
+  
+  props.model.createMeeting(meetingDetails);
 
   closeModal();
 }
@@ -189,6 +207,10 @@ function removeMeeting(id) {
 
 function projectSelected() {
   return props.model.getCurrentProject() != null;
+}
+
+function getCurrentProjectName() {
+  return props.model.getCurrentProject().name;
 }
 
 function getProjectMeetings() {
@@ -402,6 +424,10 @@ onBeforeUnmount(() => {
 }
 
 /* Edit button inside card */
+div.edit-btn {
+  float: right;
+}
+
 .edit-btn :deep(button) {
   border-radius: 12px;
   padding: 10px 14px;

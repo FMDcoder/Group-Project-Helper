@@ -77,6 +77,12 @@ export default {
   methods: {
     openProject() {
       this.viewEditProject = true;
+      
+      const currentProject = this.model.getCurrentProject();
+      if (currentProject != null && currentProject.id) {
+        this.projectName = currentProject.name;
+        this.projectDescription = currentProject.description;
+      }
 
       // Autofocus on Name
       this.$nextTick(() => {
