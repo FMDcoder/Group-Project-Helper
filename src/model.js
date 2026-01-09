@@ -147,6 +147,8 @@ function sqlToJs(sq) {
         cols.forEach((e, i) => {
             value = ['deadline', 'time'].includes(e) ? formatDate(row[i]) : row[i];
             obj[e] = value;
+            // för att använda sql-tid, ersätt ovanstående 2 rader med följande rad
+            // obj[e] = row[i];
         } );
         return obj;
     }
