@@ -43,13 +43,15 @@ export default {
       // Convert to ISO: "YYYY-MM-DDTHH:MM:SS"
       const iso = deadline.replace(" ", "T");
       const dt = new Date(iso);
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
       // If date parsing fails, fall back to trimming seconds
       if (isNaN(dt.getTime())) {
         return deadline.length >= 16 ? deadline.slice(0, 16) : deadline;
       }
 
-      const year = dt.getFullYear();
+      let year = dt < oneYearFromNow ? "" : dt.getFullYear();
       const monthDay = dt.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",

@@ -95,6 +95,8 @@ const MOCK_DATA = {
         ['Task board view', '...', '2026-01-10 23:59:59', 1, 1],
         ['Learn songs', 'Learn the keyboard parts of the songs', '2026-03-15 10:00:00', 2, 1],
         ['Read the book', 'Well, what are you waiting for?', '2026-02-24 11:00:00', 5, 2],
+        ['Long term task', 'It could have been december', '2027-01-05 09:30:00', 4, 1],
+        ['Longer term task', 'Let\'s see...', '2027-02-05 09:30:00', 4, 1],
     ],
     'meeting': [
         // [name, time, place, projectId]
@@ -126,6 +128,8 @@ const MOCK_DATA = {
         [4, 2],
         [1, 4],
         [1, 5],
+        [1, 6],
+        [1, 7],
         [2, 5],
         [3, 5],
         [4, 5],
@@ -144,6 +148,10 @@ function sqlToJs(sq) {
     }
     sq[0].values.forEach(row => l.push(zipToObj(row)));
     return l;
+}
+
+function formatDate(date) {
+    
 }
 
 class GroupProjectHelperModel {
