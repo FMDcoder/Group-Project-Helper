@@ -70,7 +70,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -109,7 +109,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -149,7 +149,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -427,6 +427,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 * { box-sizing: border-box; }
+
+.assigned {
+  background-color: #2563eb !important;
+  color: white !important;
+}
 
 .page {
   max-width: 1200px;
