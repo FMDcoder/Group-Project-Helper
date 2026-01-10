@@ -1,261 +1,486 @@
 <template>
-  <section id="app">
-    <h1>Task Board Screen</h1>
+  <section class="page">
+    <div class="page-header">
+      <h1>Task Board</h1>
+      <p class="subtitle">
+        Manage tasks for: <b>{{ currentProjectName || "No project selected" }}</b>
+      </p>
+    </div>
 
-    <div class="taskboard">
-      <!-- ===================== TO DO COLUMN ===================== -->
+    <div v-if="!currentProjectId" class="card">
+      <p class="subtitle">Select a project to view tasks.</p>
+    </div>
+
+    <div v-else class="taskboard">
+      <!-- TO DO -->
       <div class="column">
         <h2>To Do</h2>
 
-        <!-- Add Task (UI only) -->
-        <div class="add-task">
-          <h3>Add Task</h3>
+        <div class="card-lite">
+          <h3 class="mini-title">Add task</h3>
 
-          <div>
-            <label>Title</label>
-            <input type="text" placeholder="e.g., Create prototype sketches" />
-          </div>
+          <label class="field">
+            <span class="field-label">Title</span>
+            <input v-model.trim="newTask.name" type="text" placeholder="e.g., Create prototype sketches" />
+          </label>
 
-          <div>
-            <label>Description</label>
-            <input type="text" placeholder="Short description" />
-          </div>
+          <label class="field">
+            <span class="field-label">Description</span>
+            <input v-model.trim="newTask.description" type="text" placeholder="Short description" />
+          </label>
 
-          <div>
-            <label>Deadline</label>
-            <input type="date" />
-          </div>
+          <label class="field">
+            <span class="field-label">Deadline</span>
+            <input v-model="newTask.deadline" type="datetime-local" />
+          </label>
 
           <div class="actions">
-            <button type="button">Add to To Do</button>
+            <button class="btn btn-primary" :disabled="isAddDisabled" @click="addTask">
+              Add to To Do
+            </button>
           </div>
+
+          <p v-if="isAddDisabled" class="hint">Fill in title + description to enable Add.</p>
         </div>
 
-        <!-- Example Task -->
-        <div class="task">
+        <div v-for="t in todoTasks" :key="t.id" class="task">
           <div class="task-header">
-            <h3 class="task-title">Design prototype</h3>
+            <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge todo">To Do</span>
           </div>
 
           <div class="task-fields">
             <div>
               <label>Description</label>
-              <input
-                type="text"
-                value="Create low-fi sketches + short explanation text"
-                readonly
-              />
+              <input type="text" :value="t.description || ''" readonly />
             </div>
 
             <div>
               <label>Deadline</label>
-              <input type="text" value="Dec 12" readonly />
+              <input type="text" :value="formatDeadline(t.deadline)" readonly />
             </div>
 
             <div>
               <label>Assigned to</label>
-              <input type="text" value="Oskar, Ali" readonly />
+              <input type="text" :value="t.assignees || '—'" readonly />
             </div>
           </div>
 
-          <div class="actions">
-            <button type="button">Assign to me</button>
-            <button type="button">Edit</button>
-            <button type="button">Delete</button>
+          <div class="actions actions-3">
+            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="openEdit(t)">Edit</button>
+            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
+          </div>
+
+          <div class="move-row">
+            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.inProgress)">Move to In Progress</button>
           </div>
         </div>
       </div>
 
-      <!-- ===================== IN PROGRESS COLUMN ===================== -->
+      <!-- IN PROGRESS -->
       <div class="column">
         <h2>In Progress</h2>
 
-        <div class="task">
+        <div v-for="t in progressTasks" :key="t.id" class="task">
           <div class="task-header">
-            <h3 class="task-title">Write report introduction</h3>
+            <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge progress">In Progress</span>
           </div>
 
           <div class="task-fields">
             <div>
               <label>Description</label>
-              <input
-                type="text"
-                value="Problem + motivation + target users + context"
-                readonly
-              />
+              <input type="text" :value="t.description || ''" readonly />
             </div>
 
             <div>
               <label>Deadline</label>
-              <input type="text" value="Dec 14" readonly />
+              <input type="text" :value="formatDeadline(t.deadline)" readonly />
             </div>
 
             <div>
               <label>Assigned to</label>
-              <input type="text" value="Emma" readonly />
+              <input type="text" :value="t.assignees || '—'" readonly />
             </div>
           </div>
 
-          <div class="actions">
-            <button type="button">Assign to me</button>
-            <button type="button">Edit</button>
-            <button type="button">Delete</button>
+          <div class="actions actions-3">
+            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="openEdit(t)">Edit</button>
+            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
+          </div>
+
+          <div class="move-row">
+            <button class="btn" @click="moveTask(t.id, statusIds.todo)">Move to To Do</button>
+            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.done)">Move to Done</button>
           </div>
         </div>
       </div>
 
-      <!-- ===================== DONE COLUMN ===================== -->
+      <!-- DONE -->
       <div class="column">
         <h2>Done</h2>
 
-        <div class="task">
+        <div v-for="t in doneTasks" :key="t.id" class="task">
           <div class="task-header">
-            <h3 class="task-title">Create personas</h3>
+            <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge done">Done</span>
           </div>
 
           <div class="task-fields">
             <div>
               <label>Description</label>
-              <input
-                type="text"
-                value="4 personas + scenarios for the report"
-                readonly
-              />
+              <input type="text" :value="t.description || ''" readonly />
             </div>
 
             <div>
               <label>Deadline</label>
-              <input type="text" value="Dec 8" readonly />
+              <input type="text" :value="formatDeadline(t.deadline)" readonly />
             </div>
 
             <div>
               <label>Assigned to</label>
-              <input type="text" value="Mohammed, Joel" readonly />
+              <input type="text" :value="t.assignees || '—'" readonly />
             </div>
           </div>
 
-          <div class="actions">
-            <button type="button" disabled>Completed</button>
-            <button type="button">Edit</button>
-            <button type="button">Delete</button>
+          <div class="actions actions-3">
+            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="openEdit(t)">Edit</button>
+            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
+          </div>
+
+          <div class="move-row">
+            <button class="btn" @click="moveTask(t.id, statusIds.inProgress)">Move to In Progress</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- THREADS -->
-    <h2>Trådar</h2>
-    <ul>
-      <li v-for="t in threads" :key="t.id">
-        {{ t.name }}
-        <button @click="removeThread(t.id)">Ta bort</button>
-      </li>
-    </ul>
+    <!-- EDIT MODAL -->
+    <div v-if="showEdit" class="modal-backdrop" @click.self="closeEdit">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Edit task">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit task</h3>
+          <button class="btn btn-ghost" @click="closeEdit" aria-label="Close">✕</button>
+        </div>
 
-    <button @click="addThread">Lägg till tråd</button>
+        <div class="modal-body">
+          <label class="field">
+            <span class="field-label">Title</span>
+            <input ref="editTitleInput" v-model.trim="editForm.name" type="text" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Description</span>
+            <input v-model.trim="editForm.description" type="text" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Deadline</span>
+            <input v-model="editForm.deadline" type="datetime-local" />
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" @click="closeEdit">Cancel</button>
+          <button class="btn btn-primary" :disabled="isEditDisabled" @click="saveEdit">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE MODAL -->
+    <div v-if="showDelete" class="modal-backdrop" @click.self="closeDelete">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm delete task">
+        <div class="modal-header">
+          <h3 class="modal-title">Delete task?</h3>
+          <button class="btn btn-ghost" @click="closeDelete" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="hint" style="margin:0;">
+            Are you sure you want to delete <b>{{ taskToDelete?.name }}</b>?
+            This action cannot be undone.
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" @click="closeDelete">Cancel</button>
+          <button class="btn btn-danger" @click="confirmDelete">Delete</button>
+        </div>
+      </div>
+    </div>
+
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 
-const columns = ref([]);
-const threads = ref([]);
+const props = defineProps(["model"]);
 
-async function load() {
-  const res = await fetch(document.location.origin + "/taskboard");
-  const data = await res.json();
-  columns.value = data.columns;
-  threads.value = data.threads;
+const tasks = ref([]);
+const statusIds = ref({ todo: null, inProgress: null, done: null });
+
+const showEdit = ref(false);
+const showDelete = ref(false);
+
+const taskToDelete = ref(null);
+
+const newTask = ref({
+  name: "",
+  description: "",
+  deadline: "",
+});
+
+const editForm = ref({
+  id: null,
+  name: "",
+  description: "",
+  deadline: "",
+});
+
+const editTitleInput = ref(null);
+
+const currentProjectId = computed(() => props.model.getCurrentProject()?.id ?? null);
+const currentProjectName = computed(() => props.model.getCurrentProject()?.name ?? null);
+
+const todoTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.todo));
+const progressTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.inProgress));
+const doneTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.done));
+
+const isAddDisabled = computed(() => {
+  return newTask.value.name.trim().length === 0 || newTask.value.description.trim().length === 0;
+});
+
+const isEditDisabled = computed(() => {
+  return editForm.value.name.trim().length === 0 || editForm.value.description.trim().length === 0;
+});
+
+let escEdit = null;
+let escDelete = null;
+
+function loadBoard() {
+  if (!currentProjectId.value) {
+    tasks.value = [];
+    return;
+  }
+
+  statusIds.value = {
+    todo: props.model.getStatusIdByName("To do"),
+    inProgress: props.model.getStatusIdByName("In progress"),
+    done: props.model.getStatusIdByName("Done"),
+  };
+
+  tasks.value = props.model.getProjectTasksForBoard();
 }
 
-async function addThread() {
-  await fetch(document.location.origin + "/threads", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "New Thread" }),
+watch(currentProjectId, () => loadBoard(), { immediate: true });
+
+function toPretty(dt) {
+  if (!dt) return "";
+  const d = dt instanceof Date ? dt : new Date(dt);
+  if (Number.isNaN(d.getTime())) return String(dt);
+
+  const date = d.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
-  load();
+
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+  return `${date}, ${time}`;
 }
 
-async function removeThread(id) {
-  await fetch(document.location.origin + `/threads/${id}`, {
-    method: "DELETE",
+function formatDeadline(deadline) {
+  return deadline ? toPretty(deadline) : "—";
+}
+
+function addTask() {
+  if (isAddDisabled.value) return;
+
+  props.model.createTask({
+    name: newTask.value.name,
+    description: newTask.value.description,
+    deadline: newTask.value.deadline || null,
+    statusId: statusIds.value.todo,
   });
-  load();
+
+  newTask.value = { name: "", description: "", deadline: "" };
+  loadBoard();
 }
 
-onMounted(load);
+function openEdit(task) {
+  showEdit.value = true;
+
+  editForm.value = {
+    id: task.id,
+    name: task.name ?? "",
+    description: task.description ?? "",
+    deadline: task.deadline ? props.model.toDatetimeLocal(task.deadline) : "",
+  };
+
+  nextTick(() => editTitleInput.value?.focus?.());
+
+  escEdit = (e) => {
+    if (e.key === "Escape") closeEdit();
+  };
+  window.addEventListener("keydown", escEdit);
+}
+
+function closeEdit() {
+  showEdit.value = false;
+  editForm.value = { id: null, name: "", description: "", deadline: "" };
+
+  if (escEdit) {
+    window.removeEventListener("keydown", escEdit);
+    escEdit = null;
+  }
+}
+
+function saveEdit() {
+  if (isEditDisabled.value) return;
+
+  props.model.updateTask({
+    id: editForm.value.id,
+    name: editForm.value.name,
+    description: editForm.value.description,
+    deadline: editForm.value.deadline || null,
+  });
+
+  closeEdit();
+  loadBoard();
+}
+
+function openDelete(task) {
+  taskToDelete.value = task;
+  showDelete.value = true;
+
+  escDelete = (e) => {
+    if (e.key === "Escape") closeDelete();
+  };
+  window.addEventListener("keydown", escDelete);
+}
+
+function closeDelete() {
+  showDelete.value = false;
+  taskToDelete.value = null;
+
+  if (escDelete) {
+    window.removeEventListener("keydown", escDelete);
+    escDelete = null;
+  }
+}
+
+function confirmDelete() {
+  if (!taskToDelete.value) return;
+  props.model.deleteTask(taskToDelete.value.id);
+  closeDelete();
+  loadBoard();
+}
+
+function assignToMe(taskId) {
+  props.model.assignTaskToCurrentUser(taskId);
+  loadBoard();
+}
+
+function moveTask(taskId, newStatusId) {
+  props.model.updateTaskStatus(taskId, newStatusId);
+  loadBoard();
+}
+
+onBeforeUnmount(() => {
+  if (escEdit) window.removeEventListener("keydown", escEdit);
+  if (escDelete) window.removeEventListener("keydown", escDelete);
+});
 </script>
 
 <style scoped>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-#app {
+.page {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 18px;
 }
 
-h1 {
-  margin: 0 0 16px 0;
+.page-header { margin-bottom: 14px; }
+
+.subtitle { margin: 6px 0 0 0; color: #64748b; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
 }
 
-/* Board layout */
 .taskboard {
   display: flex;
   gap: 16px;
   align-items: flex-start;
 }
 
-/* Columns */
 .column {
   flex: 1;
   background: #ffffff;
-  border: 1px solid #d7dbe3;
-  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   padding: 14px;
-  min-height: 500px;
+  min-height: 520px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
 }
 
 .column h2 {
   margin: 0 0 12px 0;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eceff4;
+  border-bottom: 1px solid #eef2f7;
   font-size: 18px;
 }
 
-/* Add task box */
-.add-task {
-  border: 1px solid #cfd6e0;
-  border-radius: 10px;
+.card-lite {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 12px;
-  background: #fafbfc;
+  background: #f8fafc;
   margin-bottom: 14px;
 }
 
-.add-task h3 {
+.mini-title {
   margin: 0 0 10px 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
 }
 
-/* Task cards */
 .task {
-  border: 1px solid #cfd6e0;
-  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 12px;
   background: #ffffff;
   margin-bottom: 14px;
 }
 
-.task > div,
-.add-task > div {
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 10px;
 }
+
+.task-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.task-fields > div { margin-bottom: 10px; }
 
 label {
   display: block;
@@ -264,36 +489,174 @@ label {
   margin-bottom: 4px;
 }
 
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+}
+
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #cfd6e0;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: #ffffff;
   font-size: 14px;
+  height: 44px;
 }
 
-input[readonly] {
-  background: #f1f5f9;
+input[readonly] { background: #f1f5f9; }
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-button {
-  width: 100%;
-  padding: 9px 10px;
-  border: 1px solid #cfd6e0;
-  border-radius: 8px;
+.actions-3 { flex-wrap: wrap; }
+
+.move-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 1px solid #e2e8f0;
   background: #ffffff;
+  color: #0f172a;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-weight: 800;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
-button:hover {
-  background: #f3f4f6;
+.btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
 }
 
-button:disabled {
-  opacity: 0.6;
+.btn:disabled {
   cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(37, 99, 235, 0.14);
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 1px solid #e2e8f0;
+}
+
+.badge.todo { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+.badge.progress { background: rgba(245, 158, 11, 0.16); color: #b45309; }
+.badge.done { background: rgba(34, 197, 94, 0.16); color: #15803d; }
+
+.hint {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.modal {
+  width: 520px;
+  max-width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.25);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 10px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.modal-body {
+  padding: 10px 16px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+@media (max-width: 1000px) {
+  .taskboard { flex-direction: column; }
 }
 </style>

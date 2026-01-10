@@ -49,11 +49,11 @@
             <li v-for="m in getProjectMeetings()" :key="m.id" class="meeting-item">
               <div class="meeting-main">
                 <div class="meeting-title">{{ m.name }}</div>
-                <div class="meeting-date">{{ m.time }}</div>
+                <div class="meeting-date">{{ formatMeetingTime(m.time) }}</div>
                 <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
               </div>
 
-              <button class="btn btn-ghost" @click="removeMeeting(m.id)">Delete</button>
+              <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
               <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
             </li>
 
@@ -68,8 +68,8 @@
         </div>
       </div>
 
-      <!-- MODAL -->
-      <div v-if="showModal" class="modal-backdrop">
+      <!-- MODAL: Add meeting -->
+      <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
           <div class="modal-header">
             <h3 class="modal-title">New meeting</h3>
@@ -88,23 +88,27 @@
             </label>
 
             <label class="field">
-              <span class="field-label">Date</span>
-              <input v-model="newMeeting.date" type="datetime-local" />
+              <span class="field-label">Place</span>
+              <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
             </label>
 
             <label class="field">
-              <span class="field-label">Place</span>
-              <input v-model="newMeeting.place" type="text" />
+              <span class="field-label">Date</span>
+              <input v-model="newMeeting.date" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Time</span>
+              <input v-model="newMeeting.time" type="time" />
             </label>
 
             <p v-if="isAddDisabled" class="hint">
-              Fill in both name and date to enable Add.
+              Fill in name, place, date and time to enable Add.
             </p>
           </div>
 
           <div class="modal-actions">
             <button class="btn" @click="closeModal">Cancel</button>
-
             <button
               class="btn btn-primary"
               @click="confirmAdd"
@@ -117,9 +121,9 @@
         </div>
       </div>
 
-      <!-- Edit Model -->
-      <div v-if="showModalEdit" class="modal-backdrop">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
+      <!-- MODAL: Edit meeting -->
+      <div v-if="showModalEdit" class="modal-backdrop" @click.self="closeModalEdit">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Edit meeting">
           <div class="modal-header">
             <h3 class="modal-title">Edit meeting</h3>
             <button class="btn btn-ghost" @click="closeModalEdit" aria-label="Close">✕</button>
@@ -137,23 +141,27 @@
             </label>
 
             <label class="field">
-              <span class="field-label">Date</span>
-              <input v-model="newMeeting.date" type="datetime-local" />
+              <span class="field-label">Place</span>
+              <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
             </label>
 
             <label class="field">
-              <span class="field-label">Place</span>
-              <input v-model="newMeeting.place" type="text" />
+              <span class="field-label">Date</span>
+              <input v-model="newMeeting.date" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Time</span>
+              <input v-model="newMeeting.time" type="time" />
             </label>
 
             <p v-if="isAddDisabled" class="hint">
-              Fill in both name and date to enable Add.
+              Fill in name, place, date and time to enable Edit.
             </p>
           </div>
 
           <div class="modal-actions">
             <button class="btn" @click="closeModalEdit">Cancel</button>
-
             <button
               class="btn btn-primary"
               @click="confirmEdit"
@@ -162,6 +170,28 @@
             >
               Edit
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: Confirm delete -->
+      <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm delete meeting">
+          <div class="modal-header">
+            <h3 class="modal-title">Delete meeting?</h3>
+            <button class="btn btn-ghost" @click="closeDeleteModal" aria-label="Close">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <p class="hint" style="margin:0;">
+              Are you sure you want to delete <b>{{ meetingToDelete?.name }}</b>?
+              This action cannot be undone.
+            </p>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn" @click="closeDeleteModal">Cancel</button>
+            <button class="btn btn-danger" @click="confirmDelete">Delete</button>
           </div>
         </div>
       </div>
@@ -187,64 +217,51 @@ const props = defineProps(["model"]);
 
 const project = ref({});
 const meetings = ref([]);
+
 const showModal = ref(false);
 const showModalEdit = ref(false);
-const newMeeting = ref({ title: "", date: "" , place: ""});
 
-/* ✅ Autofocus reference */
+const showDeleteModal = ref(false);
+const meetingToDelete = ref(null);
+
+const newMeeting = ref({
+  id: null,
+  title: "",
+  place: "",
+  date: "",
+  time: "",
+});
+
 const meetingNameInput = ref(null);
 const meetingEditNameInput = ref(null);
-const update = ref([]);
 
-function isValidDate(value) {
-  return value instanceof Date && !isNaN(value.getTime());
-}
-
-/* ✅ Disable Add until valid */
 const isAddDisabled = computed(() => {
   return (
     newMeeting.value.title.trim().length === 0 ||
-    isValidDate(newMeeting.value.date) ||
-    newMeeting.value.place.trim().length === 0
+    newMeeting.value.place.trim().length === 0 ||
+    newMeeting.value.date.trim().length === 0 ||
+    newMeeting.value.time.trim().length === 0
   );
 });
 
-/* ✅ ESC handler */
 let escHandler = null;
 let escHandlerEdit = null;
+let escHandlerDelete = null;
 
 function openModal() {
   showModal.value = true;
 
-  // Autofocus on Name
-  nextTick(() => {
-    meetingNameInput.value?.focus?.();
-  });
+  nextTick(() => meetingNameInput.value?.focus?.());
 
-  // Close with ESC
   escHandler = (e) => {
     if (e.key === "Escape") closeModal();
   };
   window.addEventListener("keydown", escHandler);
 }
 
-function openModalEdit() {
-  showModalEdit.value = true;
-
-  // Autofocus on Name
-  nextTick(() => {
-    meetingEditNameInput.value?.focus?.();
-  });
-
-  escHandlerEdit = (e) => {
-    if (e.key === "Escape") closeModalEdit();
-  };
-  window.addEventListener("keydown", escHandlerEdit);
-}
-
 function closeModal() {
   showModal.value = false;
-  newMeeting.value = { title: "", date: "" };
+  newMeeting.value = { id: null, title: "", place: "", date: "", time: "" };
 
   if (escHandler) {
     window.removeEventListener("keydown", escHandler);
@@ -252,9 +269,20 @@ function closeModal() {
   }
 }
 
+function openModalEdit() {
+  showModalEdit.value = true;
+
+  nextTick(() => meetingEditNameInput.value?.focus?.());
+
+  escHandlerEdit = (e) => {
+    if (e.key === "Escape") closeModalEdit();
+  };
+  window.addEventListener("keydown", escHandlerEdit);
+}
+
 function closeModalEdit() {
   showModalEdit.value = false;
-  newMeeting.value = { title: "", date: "" };
+  newMeeting.value = { id: null, title: "", place: "", date: "", time: "" };
 
   if (escHandlerEdit) {
     window.removeEventListener("keydown", escHandlerEdit);
@@ -262,25 +290,21 @@ function closeModalEdit() {
   }
 }
 
+function combineDateTime(dateStr, timeStr) {
+  // Example: 2026-01-10 + 22:00 -> 2026-01-10T22:00
+  return `${dateStr}T${timeStr}`;
+}
+
 function confirmAdd() {
   if (isAddDisabled.value) return;
 
   const meetingDetails = {
-    //id: Date.now(),             // replace with DB id if you use backend
     name: newMeeting.value.title,
-    time: newMeeting.value.date,
     place: newMeeting.value.place,
-    //deadline: this.form.deadline
+    time: combineDateTime(newMeeting.value.date, newMeeting.value.time),
   };
-  
-  //meetings.value.push({
-  //  id: Date.now(),
-  //  title: newMeeting.value.title,
-  //  date: newMeeting.value.date,
-  //});
-  
-  props.model.createMeeting(meetingDetails);
 
+  props.model.createMeeting(meetingDetails);
   closeModal();
 }
 
@@ -288,49 +312,92 @@ function confirmEdit() {
   if (isAddDisabled.value) return;
 
   const meetingDetails = {
-    //id: Date.now(),             // replace with DB id if you use backend
+    id: newMeeting.value.id,
     name: newMeeting.value.title,
-    time: newMeeting.value.date,
     place: newMeeting.value.place,
-    id: newMeeting.value.id
-    //deadline: this.form.deadline
+    time: combineDateTime(newMeeting.value.date, newMeeting.value.time),
   };
 
-  //meetings.value.push({
-  //  id: Date.now(),
-  //  title: newMeeting.value.title,
-  //  date: newMeeting.value.date,
-  //});
-  
   props.model.updateMeeting(meetingDetails);
   closeModalEdit();
 }
 
-async function removeMeeting(id) {
-  await props.model.deleteMeeting(id)
-  meetings.value = meetings.value.filter((m) => m.id !== id);
-
-  // force the damn update >:(
-  showModalEdit.value = true;
-  showModalEdit.value = false;
-}
-
-function toDatetimeLocal(date) {
-  const d = new Date(date);
-
-  const pad = n => String(n).padStart(2, '0');
-
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function toDateAndTime(isoLike) {
+  const d = new Date(isoLike);
+  const pad = (n) => String(n).padStart(2, "0");
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return { date, time };
 }
 
 function editMeeting(id) {
-    openModalEdit()
-    newMeeting.value.id = id
-    const currentMeeting = getProjectMeetings().find(m => m.id === id);
+  const currentMeeting = getProjectMeetings().find((m) => m.id === id);
+  if (!currentMeeting) return;
 
-    this.newMeeting.title = currentMeeting.name
-    this.newMeeting.date = toDatetimeLocal(currentMeeting.time)
-    this.newMeeting.place = currentMeeting.place
+  const dt = toDateAndTime(currentMeeting.time);
+
+  newMeeting.value = {
+    id,
+    title: currentMeeting.name ?? "",
+    place: currentMeeting.place ?? "",
+    date: dt.date,
+    time: dt.time,
+  };
+
+  openModalEdit();
+}
+
+function openDeleteModal(meeting) {
+  meetingToDelete.value = meeting;
+  showDeleteModal.value = true;
+
+  escHandlerDelete = (e) => {
+    if (e.key === "Escape") closeDeleteModal();
+  };
+  window.addEventListener("keydown", escHandlerDelete);
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false;
+  meetingToDelete.value = null;
+
+  if (escHandlerDelete) {
+    window.removeEventListener("keydown", escHandlerDelete);
+    escHandlerDelete = null;
+  }
+}
+function formatMeetingTime(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+
+  // "Wed 11 Jan 2026"
+  const day = d.toLocaleDateString("en-GB", { weekday: "short" }); // Wed
+  const date = d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }); // 11 Jan 2026
+
+  // "16:00"
+  const time = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return `${day} ${date}, ${time}`;
+}
+
+
+async function confirmDelete() {
+  if (!meetingToDelete.value) return;
+
+  await props.model.deleteMeeting(meetingToDelete.value.id);
+
+  // if you also keep local list
+  meetings.value = meetings.value.filter((m) => m.id !== meetingToDelete.value.id);
+
+  closeDeleteModal();
 }
 
 function projectSelected() {
@@ -342,13 +409,14 @@ function getCurrentProjectName() {
 }
 
 function getProjectMeetings() {
-  return props.model.getProjectMeetings()
+  return props.model.getProjectMeetings();
 }
 
 onBeforeUnmount(() => {
   if (escHandler) window.removeEventListener("keydown", escHandler);
+  if (escHandlerEdit) window.removeEventListener("keydown", escHandlerEdit);
+  if (escHandlerDelete) window.removeEventListener("keydown", escHandlerDelete);
 });
-
 </script>
 
 <style scoped>
@@ -543,6 +611,17 @@ onBeforeUnmount(() => {
   transform: none;
 }
 
+/* Danger button */
+.btn-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
 /* Disabled */
 .btn:disabled {
   cursor: not-allowed;
@@ -647,13 +726,20 @@ div.edit-btn {
   color: #334155;
 }
 
+/* Inputs */
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+input[type="time"] {
   width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 10px 12px;
   font-size: 14px;
+  box-sizing: border-box;
+  height: 44px;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 input:focus {

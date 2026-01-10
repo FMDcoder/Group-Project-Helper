@@ -1,24 +1,29 @@
+```vue
 <template>
   <div class="deadlines">
     <ul>
-      <li v-for="t in getTasks()" :key="t.id">
-        <div>
-          <router-link to="/taskboard" @click="setCurrentProject(t.projectId)">
-            {{ formatDeadline(t.deadline) }} — {{ t.name }}
+      <li
+        v-for="t in getTasks()"
+        :key="t.id"
+        :class="['deadline-item', urgencyClass(t.deadline)]"
+      >
+        <router-link
+          class="task-link"
+          to="/taskboard"
+          @click="setCurrentProject(t.projectId)"
+        >
+          {{ formatDeadline(t.deadline) }} — {{ t.name }}
+        </router-link>
+
+        <div v-if="currentProjectOnly != true" class="project-line">
+          <router-link
+            to="/project"
+            class="project-link"
+            @click="setCurrentProject(t.projectId)"
+          >
+            {{ t.projectName }}
           </router-link>
         </div>
-
-        <ul v-if="currentProjectOnly != true">
-          <li>
-            <router-link
-              to="/project"
-              class="project-link"
-              @click="setCurrentProject(t.projectId)"
-            >
-              {{ t.projectName }}
-            </router-link>
-          </li>
-        </ul>
       </li>
     </ul>
   </div>
@@ -35,53 +40,61 @@ export default {
       return this.model.getTasksByDeadline();
     },
 
-    // Converts: "2026-01-10 22:00:00" -> "2026 Jan 10, 22:00"
+    urgencyClass(deadline) {
+      if (!deadline) return "is-normal";
+      const d = deadline instanceof Date ? deadline : new Date(deadline);
+      if (Number.isNaN(d.getTime())) return "is-normal";
+
+      const diffHours = (d.getTime() - Date.now()) / (1000 * 60 * 60);
+
+      if (diffHours < 0) return "is-past";
+      if (diffHours <= 24) return "is-urgent";
+      if (diffHours <= 48) return "is-soon";
+      return "is-normal";
+    },
+
     formatDeadline(deadline) {
       if (!deadline) return "";
+      const d = deadline instanceof Date ? deadline : new Date(deadline);
 
-      // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM"
-      // Convert to ISO: "YYYY-MM-DDTHH:MM:SS"
-
-      // If date parsing fails, fall back to trimming seconds
-      if (isNaN(deadline.getTime())) {
-        return deadline.length >= 16 ? deadline.slice(0, 16) : deadline;
+      if (Number.isNaN(d.getTime())) {
+        const s = String(deadline);
+        return s.length >= 16 ? s.slice(0, 16) : s;
       }
 
-      const checkFutureYear = new Date();
-      const checkFutureWeek = new Date();
-      const checkFutureDay  = new Date();
-      const now = new Date().getTime();
-      checkFutureYear.setFullYear(checkFutureYear.getFullYear() + 1);
-      checkFutureWeek.setDate(checkFutureWeek.getDate() + 7);
-      checkFutureDay.setDate(checkFutureDay.getDate() + 1);
-      
-      console.log(checkFutureDay - deadline);
+      const now = Date.now();
+      const oneWeekAhead = new Date();
+      oneWeekAhead.setDate(oneWeekAhead.getDate() + 7);
 
-      const year = deadline < checkFutureYear ? "" : deadline.getFullYear();
-
-      const monthDay = deadline.toLocaleDateString("en-US", {
+      const datePart = d.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
-      }); // e.g. "Jan 10"
+        year: "numeric",
+      }); // "Jan 10, 2026"
 
-      const time = deadline.toLocaleTimeString("en-GB", {
+      const time = d.toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
-      }); // e.g. "22:00"
-      
+        hour12: false,
+      }); // "22:00"
+
       let timeLeft = "";
-      let diff = 0;
-      if (deadline < checkFutureDay) {
-        diff = Math.floor(
-          (deadline.getTime() - now) % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
-        timeLeft = ` (in ${diff} hours)`
-      }
-      else if (deadline < checkFutureWeek) {
-        diff = Math.floor((deadline.getTime() - now) / (1000 * 60 * 60 * 24));
-        timeLeft = ` (in ${diff} day${diff == 1 ? "" : "s"})`
+      const diffMs = d.getTime() - now;
+
+      if (diffMs < 0) {
+        timeLeft = " (past)";
+      } else {
+        const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffHours <= 24) {
+          timeLeft = ` (in ${diffHours} hour${diffHours === 1 ? "" : "s"})`;
+        } else if (d < oneWeekAhead) {
+          timeLeft = ` (in ${diffDays} day${diffDays === 1 ? "" : "s"})`;
+        }
       }
 
-      return `${year} ${monthDay}, ${time}${timeLeft}`;
+      return `${datePart}, ${time}${timeLeft}`;
     },
 
     setCurrentProject(projectId) {
@@ -92,25 +105,81 @@ export default {
 </script>
 
 <style scoped>
-/* Make deadline links darker and clearer on hover/focus */
-.deadlines a {
+.deadlines ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.deadline-item {
+  border: 1px solid #e2e8f0;
+  border-left: 6px solid #2563eb;
+  border-radius: 12px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.task-link {
   display: block;
   padding: 10px 12px;
-  border-radius: 12px;
   color: #0f172a;
   text-decoration: none;
+  font-weight: 800;
   transition: background 160ms ease, color 160ms ease;
 }
 
-.deadlines a:hover {
-  background: rgba(37, 99, 235, 0.18); /* darker than before */
+.task-link:hover {
+  background: rgba(37, 99, 235, 0.18);
   color: #0b1220;
 }
 
-.deadlines a:focus-visible {
+.task-link:focus-visible {
   outline: 3px solid rgba(37, 99, 235, 0.35);
   outline-offset: 2px;
-  background: rgba(37, 99, 235, 0.22); /* a bit stronger */
+  background: rgba(37, 99, 235, 0.22);
 }
 
+.project-line {
+  padding: 0 12px 12px 12px;
+}
+
+.project-link {
+  display: inline-block;
+  color: #475569;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.project-link:hover {
+  text-decoration: underline;
+}
+
+/* urgency */
+.deadline-item.is-urgent {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.deadline-item.is-soon {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.deadline-item.is-normal {
+  border-left-color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.deadline-item.is-past {
+  border-left-color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  opacity: 0.9;
+}
+
+.deadline-item.is-past .task-link {
+  color: #64748b;
+}
 </style>
+```
