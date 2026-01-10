@@ -122,13 +122,12 @@ const MOCK_DATA = {
     [1, 1],
     [1, 2],
     [4, 2],
-    [1, 4],
     [1, 5],
     [1, 6],
     [1, 7],
-    [2, 5],
-    [3, 5],
-    [4, 5],
+    [2, 8],
+    [3, 8],
+    [4, 8],
   ],
 };
 
@@ -235,6 +234,7 @@ class GroupProjectHelperModel {
   toSqlDatetime(datetimeLocal) {
     // "2026-01-10T22:00" -> "2026-01-10 22:00:00"
     if (!datetimeLocal) return null;
+    if (datetimeLocal instanceof Date) datetimeLocal = datetimeLocal.toISOString().slice(0, 19);
     const s = String(datetimeLocal).trim();
     if (!s) return null;
     const normalized = s.includes("T") ? s.replace("T", " ") : s;
@@ -384,16 +384,47 @@ class GroupProjectHelperModel {
   }
 
   getTasksByDeadline() {
+    if (!this.currentUser?.id) return [];
+    const now = new Date();
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 3);
+    this.printUnassignedTasksDueSoon();
     return sqlToJs(
       this.db.exec(`
         SELECT task.id, task.name, deadline, project.name AS projectName, project.id AS projectId
-        FROM task, project, taskUser
+        FROM project, task LEFT JOIN taskUser
+        ON task.id = taskUser.taskId
         WHERE task.projectId = project.id
-        AND task.id = taskUser.taskId
-        AND taskUser.userId = ${this.currentUser.id}
+        AND (
+          taskUser.userId = ${this.currentUser.id}
+          OR (
+            userId IS NULL
+            AND task.deadline
+            BETWEEN '${this.toSqlDatetime(now)}'
+            AND '${this.toSqlDatetime(soon)}'
+          )
+        )
         ORDER BY deadline
       `)
     );
+  }
+  
+  printUnassignedTasksDueSoon() {
+    const now = new Date();
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 3);
+    const t = sqlToJs(this.db.exec(`
+      SELECT userId, task.name, deadline, project.name AS projectName
+      FROM task LEFT JOIN taskUser
+      ON task.id = taskUser.taskId
+      JOIN project
+      ON task.projectId = project.id
+      WHERE userId IS NULL
+      AND task.deadline
+      BETWEEN '${this.toSqlDatetime(now)}'
+      AND '${this.toSqlDatetime(soon)}'
+      `));
+    console.log(t);
   }
 
   getProjectTasksByDeadline() {
