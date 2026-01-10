@@ -85,7 +85,7 @@ export default {
   z-index: 1000;
 
   background: rgba(241, 245, 249, 0.92);
-  backdrop-filter: blur(10px);
+  /*backdrop-filter: blur(10px); - this destroys positioning for new project modal*/
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -104,7 +104,7 @@ export default {
 .nav-left {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  /*flex-wrap: wrap; - this destroys positioning for new project modal*/
   align-items: center;
 }
 

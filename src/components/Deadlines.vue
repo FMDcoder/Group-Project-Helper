@@ -49,7 +49,7 @@ export default {
 
       if (diffHours < 0) return "is-past";
       if (diffHours <= 24) return "is-urgent";
-      if (diffHours <= 48) return "is-soon";
+      if (diffHours <= 72) return "is-soon";
       return "is-normal";
     },
 
@@ -63,14 +63,26 @@ export default {
       }
 
       const now = Date.now();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
       const oneWeekAhead = new Date();
       oneWeekAhead.setDate(oneWeekAhead.getDate() + 7);
 
-      const datePart = d.toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      }); // "Jan 10, 2026"
+      let datePart;
+      const ds = d.toDateString();
+      if (ds === (new Date()).toDateString()) {
+        datePart = "Today";
+      }
+      else if (ds === tomorrow.toDateString()) {
+        datePart = "Tomorrow";
+      }
+      else {
+        datePart = d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        }); // "Jan 10, 2026"
+      }
 
       const time = d.toLocaleTimeString("en-GB", {
         hour: "2-digit",
@@ -84,17 +96,20 @@ export default {
       if (diffMs < 0) {
         timeLeft = " (past)";
       } else {
-        const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        if (diffHours <= 24) {
-          timeLeft = ` (in ${diffHours} hour${diffHours === 1 ? "" : "s"})`;
+        if (diffHours == 0) {
+          timeLeft = `(in <1 h)`;
+        }
+        else if (diffHours < 24) {
+          timeLeft = `(in ${diffHours} h)`; //${diffHours === 1 ? "" : "s"})`;
         } else if (d < oneWeekAhead) {
-          timeLeft = ` (in ${diffDays} day${diffDays === 1 ? "" : "s"})`;
+          timeLeft = `(in ${diffDays} day${diffDays === 1 ? "" : "s"})`;
         }
       }
 
-      return `${datePart}, ${time}${timeLeft}`;
+      return `${datePart}, ${time}  ${timeLeft}`;
     },
 
     setCurrentProject(projectId) {

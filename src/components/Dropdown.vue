@@ -22,7 +22,7 @@
       <!-- action row -->
       <ul class="menu-action">
         <li>
-          <NewProjBtn :model="this.model" @project-created="onProjectCreated" />
+          <NewProjBtn :model="this.model" @modal-change="setModalState" @project-created="onProjectCreated" />
         </li>
       </ul>
     </div>
@@ -41,7 +41,9 @@ export default {
   data() {
     return {
       isOpen: false,
-      selectedOption: null
+      selectedOption: null,
+      modalState: false,
+      canClose: true,
     };
   },
 
@@ -70,8 +72,14 @@ export default {
     clickoutside(event)
     {
       const box=this.$refs.theBox
-      if(this.isOpen && box && !box.contains(event.target)){
-        this.isOpen = false
+      console.log("second");
+      if (this.canClose) {
+        if(this.isOpen && box && !box.contains(event.target)){
+          this.isOpen = false
+        }
+      }
+      else {
+        this.canClose = !this.modalState;
       }
     },
     closeBox()
@@ -80,6 +88,11 @@ export default {
       if(this.isOpen && box) {
         this.isOpen = false
       }
+    },
+    setModalState(state)
+    {
+      this.modalState = state;
+      if (state) this.canClose = false;
     }
   },
   mounted(){

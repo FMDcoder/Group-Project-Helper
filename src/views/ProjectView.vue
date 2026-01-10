@@ -53,8 +53,11 @@
                 <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
               </div>
 
-              <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
-              <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
+              <div>
+                <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
+                <div class="btn-spacer"></div>
+                <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
+              </div>
             </li>
 
             <li v-if="getProjectMeetings().length === 0" class="empty">
@@ -609,6 +612,11 @@ onBeforeUnmount(() => {
   border-color: transparent;
   box-shadow: none;
   transform: none;
+}
+
+div.btn-spacer {
+  display: inline-block;
+  width: 8px;
 }
 
 /* Danger button */
