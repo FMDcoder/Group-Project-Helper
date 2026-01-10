@@ -80,7 +80,8 @@ export default {
         datePart = d.toLocaleDateString("en-US", {
           month: "short",
           day: "2-digit",
-          year: "numeric",
+          //year: "numeric",
+          ...(d.getFullYear() != (new Date).getFullYear()) && {year: "numeric"},
         }); // "Jan 10, 2026"
       }
 

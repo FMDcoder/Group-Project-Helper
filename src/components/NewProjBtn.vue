@@ -59,7 +59,7 @@
 <script>
 export default {
   name: "NewProjBtn",
-  emits: ["modal-change", "project-created"],
+  emits: ["modal-change", "project-created", "close-esc"],
   props: ["model"],
   data() {
     return {
@@ -87,7 +87,10 @@ export default {
       });
 
       this.escHandler = (e) => {
-        if (e.key === "Escape") this.closeModal();
+        if (e.key === "Escape") {
+          this.closeModal();
+          this.$emit("close-esc");
+        }
       };
       window.addEventListener("keydown", this.escHandler);
       this.$emit("modal-change", this.show);

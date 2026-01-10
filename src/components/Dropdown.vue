@@ -22,7 +22,11 @@
       <!-- action row -->
       <ul class="menu-action">
         <li>
-          <NewProjBtn :model="this.model" @modal-change="setModalState" @project-created="onProjectCreated" />
+          <NewProjBtn :model="this.model"
+            @modal-change="setModalState"
+            @project-created="onProjectCreated"
+            @close-esc="setCanClose(true)"
+          />
         </li>
       </ul>
     </div>
@@ -92,8 +96,11 @@ export default {
     setModalState(state)
     {
       this.modalState = state;
-      this.canClose = !state;
-    }
+      if (state) this.canClose = false;
+    },
+    setCanClose () {
+      this.canClose = true;
+    },
   },
   mounted(){
     document.addEventListener("click",this.clickoutside)
@@ -131,7 +138,7 @@ export default {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: #484b53;
+  background: rgba(250, 250, 250, 0.9);
   border-radius: 12px;
   padding: 0.4rem 0.55rem; /* a bit tighter */
   min-width: 240px;
@@ -156,14 +163,15 @@ export default {
 
   color: #1b3564;         /* ✅ darker text */
   font-weight: 800;
-  font-size: 14px;
+  /*font-size: 14px;*/
 }
 
 /* Hover on project items */
 .dropdown-menu :deep(.projects .project-item:hover) {
   background: rgba(127, 162, 228, 0.18);
-  transform: none;        /* keep stable in dropdown */
-  box-shadow: none;
+  /* keep stable in dropdown 
+  transform: none;
+  box-shadow: none;*/
 }
 
 /* Keyboard focus */
@@ -176,6 +184,7 @@ export default {
 /* ---- Action row (New project) ---- */
 .menu-action {
   padding: 0.55rem 0;
+  margin-top: 10px!important;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   cursor: default;
 }
