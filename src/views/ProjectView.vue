@@ -201,6 +201,29 @@
           </div>
         </div>
       </div>
+
+      <!-- MODAL: Confirm create time exists -->
+      <div v-if="showConfirmModal" class="modal-backdrop" @click.self="closeConfirmModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm create meeting">
+          <div class="modal-header">
+            <h3 class="modal-title">Double booking?</h3>
+            <button class="btn btn-ghost" @click="closeConfirmModal" aria-label="Close">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <p class="hint" style="margin:0;">
+              There is already a meeting planned for {{ "insert time" }},
+              are you sure you want to create {{ "insert name" }}?
+            </p>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn" @click="closeConfirmModal">Cancel</button>
+            <button v-if="showModal" class="btn btn-primary" @click="confirmCreateSameTime">Create</button>
+            <button v-else class="btn btn-primary" @click="confirmUpdateSameTime">Edit</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-else class="card">
@@ -228,6 +251,9 @@ const showModalEdit = ref(false);
 const showDeleteModal = ref(false);
 const meetingToDelete = ref(null);
 
+const showConfirmModal = ref(false);
+const meetingToCreate = ref(null);
+
 const newMeeting = ref({
   id: null,
   title: "",
@@ -251,6 +277,8 @@ const isAddDisabled = computed(() => {
 let escHandler = null;
 let escHandlerEdit = null;
 let escHandlerDelete = null;
+let escHandlerConfirm = null;
+let escHandlerMemory = null;
 
 function openModal() {
   showModal.value = true;
@@ -308,8 +336,13 @@ function confirmAdd() {
     time: combineDateTime(newMeeting.value.date, newMeeting.value.time),
   };
 
-  props.model.createMeeting(meetingDetails);
-  closeModal();
+  if (props.model.meetingTimeExists(meetingDetails)) {
+    openConfirmModal(meetingDetails);
+  }
+  else {
+    props.model.createMeeting(meetingDetails);
+    closeModal();
+  }
 }
 
 function confirmEdit() {
@@ -322,8 +355,13 @@ function confirmEdit() {
     time: combineDateTime(newMeeting.value.date, newMeeting.value.time),
   };
 
-  props.model.updateMeeting(meetingDetails);
-  closeModalEdit();
+  if (props.model.meetingTimeExists(meetingDetails)) {
+    openConfirmModal(meetingDetails);
+  }
+  else {
+    props.model.updateMeeting(meetingDetails);
+    closeModalEdit();
+  }
 }
 
 function toDateAndTime(isoLike) {
@@ -370,6 +408,67 @@ function closeDeleteModal() {
     escHandlerDelete = null;
   }
 }
+
+function openConfirmModal(meeting) {
+  meetingToCreate.value = meeting;
+  showConfirmModal.value = true;
+
+  if (showModal?.value && escHandler) {
+    escHandlerMemory = escHandler;
+    window.removeEventListener("keydown", escHandler);
+    escHandler = null;
+  }
+  else if (showModalEdit?.value && escHandlerEdit) {
+    escHandlerMemory = escHandlerEdit;
+    window.removeEventListener("keydown", escHandlerEdit);
+    escHandlerEdit = null;
+  }
+
+  escHandlerConfirm = (e) => {
+    if (e.key === "Escape") closeConfirmModal();
+  };
+  window.addEventListener("keydown", escHandlerConfirm);
+}
+
+function closeConfirmModal() {
+  showConfirmModal.value = false;
+  meetingToCreate.value = null;
+
+  if (escHandlerConfirm) {
+    window.removeEventListener("keydown", escHandlerConfirm);
+    escHandlerConfirm = null;
+  }
+  
+  if (showModal?.value && escHandler == null) {
+    escHandler = escHandlerMemory;
+    window.addEventListener("keydown", escHandler);
+    escHandlerMemory = null;
+  }
+  else if (showModalEdit?.value && escHandlerEdit == null) {
+    escHandlerEdit = escHandlerMemory;
+    window.addEventListener("keydown", escHandlerEdit);
+    escHandlerMemory = null;
+  }
+}
+
+function confirmCreateSameTime() {
+  if (!meetingToCreate.value) return;
+
+  if (showModal) props.model.createMeeting(meetingToCreate.value);
+
+  closeConfirmModal();
+  closeModal();
+}
+
+function confirmUpdateSameTime() {
+  if (!meetingToCreate.value) return;
+
+  if (showModalEdit) props.model.updateMeeting(meetingToCreate.value);
+
+  closeConfirmModal();
+  closeModalEdit();
+}
+
 function formatMeetingTime(value) {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
@@ -420,6 +519,7 @@ onBeforeUnmount(() => {
   if (escHandler) window.removeEventListener("keydown", escHandler);
   if (escHandlerEdit) window.removeEventListener("keydown", escHandlerEdit);
   if (escHandlerDelete) window.removeEventListener("keydown", escHandlerDelete);
+  if (escHandlerConfirm) window.removeEventListener("keydown", escHandlerConfirm);
 });
 </script>
 

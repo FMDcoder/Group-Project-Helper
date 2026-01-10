@@ -119,9 +119,13 @@ export default {
         desc: this.form.desc.trim()
       };
 
-      this.model.createProject(projectDetails);
-      this.$emit("project-created", projectDetails);
+      const result = this.model.createProject(projectDetails);
+      if (result == 1) {
+        this.error = "Project name already exists, please choose another name!";
+        return;
+      }
 
+      this.$emit("project-created", projectDetails);
       this.closeModal();
     }
   },

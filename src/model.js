@@ -348,6 +348,10 @@ class GroupProjectHelperModel {
     if (this.currentProject != null) return {};
     return this.currentProject;
   }
+  
+  getProjectByName(name) {
+    return sqlToJs(this.db.exec(`SELECT id FROM project WHERE name = '${name}'`));
+  }
 
   getProjectTasks(projectID) {
     console.log(this.db.exec(`SELECT * FROM task WHERE projectId=${this.currentProject.id}`));
@@ -390,6 +394,18 @@ class GroupProjectHelperModel {
       `)
     );
   }
+  
+  meetingTimeExists(details) {
+    const meetingId = Object.hasOwn(details, 'id') ?
+      `AND id != ${details.id}` : '';
+    const results = sqlToJs(this.db.exec(`SELECT id FROM meeting
+        WHERE projectId = ${this.currentProject.id}
+        AND time BETWEEN '${this.toSqlDatetime(details.time)}'
+        AND '${details.time.replace("T", " ")}:59'
+        ${meetingId}`));
+    if (results.length > 0) return true;
+    else return false;
+  }
 
   // ---------- existing setters ----------
   setCurrentProject(id, force = false) {
@@ -400,6 +416,8 @@ class GroupProjectHelperModel {
   }
 
   createProject(details) {
+    if (this.getProjectByName(details.name).length > 0) return 1;
+
     this.db.run(
       `INSERT INTO project (name, description) VALUES ("${details.name}", "${details.desc}")`
     );
@@ -414,6 +432,7 @@ class GroupProjectHelperModel {
 
     this.setCurrentProject(projectId);
     this.notifyObservers();
+    return 0;
   }
 
   updateProject(details) {
@@ -429,7 +448,8 @@ class GroupProjectHelperModel {
   createMeeting(details) {
     this.db.run(`
       INSERT INTO meeting (name, time, place, projectId)
-      VALUES ("${details.name}", "${details.time}", "${details.place}", ${this.currentProject.id})
+      VALUES ("${details.name}", "${this.toSqlDatetime(details.time)}",
+      "${details.place}", ${this.currentProject.id})
     `);
 
     const meetingId = sqlToJs(
@@ -444,7 +464,7 @@ class GroupProjectHelperModel {
       UPDATE meeting
       SET
         name = '${details.name}',
-        time = '${details.time}',
+        time = '${this.toSqlDatetime(details.time)}',
         place = '${details.place}'
       WHERE id = ${details.id}
     `);

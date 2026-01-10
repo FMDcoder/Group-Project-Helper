@@ -76,7 +76,6 @@ export default {
     clickoutside(event)
     {
       const box=this.$refs.theBox
-      console.log("second");
       if (this.canClose) {
         if(this.isOpen && box && !box.contains(event.target)){
           this.isOpen = false
