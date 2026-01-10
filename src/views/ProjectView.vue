@@ -19,7 +19,7 @@
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">Progress</h2>
-            <span class="badge">{{ project.progress ?? 0 }}%</span>
+            <span class="badge">{{ getProgress() ?? 0 }}%</span>
           </div>
 
           <div class="progress-block">
@@ -28,7 +28,7 @@
               <span class="value">{{ project.deadline || "Not set" }}</span>
             </div>
 
-            <progress class="progress" :value="project.progress" max="100"></progress>
+            <progress class="progress" :value="getProgress()" max="100"></progress>
           </div>
 
           <div class="divider"></div>
@@ -515,6 +515,10 @@ function getProjectMeetings() {
   return props.model.getProjectMeetings();
 }
 
+function getProgress() {
+  return props.model.getProjectProgress();
+}
+
 onBeforeUnmount(() => {
   if (escHandler) window.removeEventListener("keydown", escHandler);
   if (escHandlerEdit) window.removeEventListener("keydown", escHandlerEdit);
@@ -616,7 +620,7 @@ onBeforeUnmount(() => {
 /* progress bar */
 .progress {
   width: 100%;
-  height: 14px;
+  height: 32px;
 }
 
 /* Divider */
