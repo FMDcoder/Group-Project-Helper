@@ -527,6 +527,14 @@ class GroupProjectHelperModel {
       `INSERT INTO projectUser (userId, projectId) VALUES (${this.currentUser.id}, ${projectId})`
     );
   }
+  
+  leaveUserProject(projectid) {
+    this.db.run(
+      `DELETE FROM projectUser
+      WHERE userId = ${this.currentUser.id}
+      AND projectId = ${projectid}`
+    );
+  }
 
   isInProject(projectid) {
     const result = this.db.exec(
