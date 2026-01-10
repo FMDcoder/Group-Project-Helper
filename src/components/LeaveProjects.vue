@@ -1,14 +1,14 @@
 <template>
   <div>
     <!-- Button to open popup -->
-    <button class="openBtn" @click="openPopup">Join project</button>
+    <button class="openBtn" @click="openPopup">Leave Project</button>
 
     <!-- Overlay -->
     <div v-if="isOpen" class="overlay" @click="closePopup">
       <!-- Popup box -->
       <div class="popup" @click.stop>
         <div class="header">
-          <h4>Join project</h4>
+          <h4>Leave project</h4>
           <button class="x" @click="closePopup" aria-label="Close">✕</button>
         </div>
 
@@ -54,9 +54,9 @@
                   <button
                     v-if="selectedProjectId === p.id"
                     class="joinBtn"
-                    @click.stop="joinSelected"
+                    @click.stop="leaveSelected"
                   >
-                    Join
+                    Leave
                   </button>
                 </div>
               </div>
@@ -80,10 +80,10 @@
             <button
               class="joinFooterBtn"
               :disabled="!selectedProject"
-              @click="joinSelected"
+              @click="leaveSelected"
               title="Select a project first"
             >
-              Join selected
+              Leave selected
             </button>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default {
       if (!query) return [];
 
       return this.projects.filter((project) =>
-        String(project?.name ?? "").toLowerCase().includes(query) && !this.model.isInProject(project?.id)
+        String(project?.name ?? "").toLowerCase().includes(query) && this.model.isInProject(project?.id)
       );
     },
 
@@ -153,11 +153,11 @@ export default {
       this.selectedProjectId = project.id;
     },
 
-    joinSelected() {
+    leaveSelected() {
       if (!this.selectedProjectId) return;
 
-      this.setCurrentProject(this.selectedProjectId);
-      this.model.joinUserProject()
+      this.setCurrentProject(null);
+      this.model.leaveUserProject(this.selectedProjectId)
 
       // If you want to navigate to the project page:
       if (this.$router) {

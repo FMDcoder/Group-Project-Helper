@@ -81,6 +81,7 @@ const MOCK_DATA = {
     ["Final project ML", "for Machine learning course"],
     ["Presentation", "in the other course..."],
     ["Book review seminar", "Discuss the book ..."],
+    ["Hidden Group", "Discuss the book ..."],
   ],
   task: [
     // [name, description, deadline, projectId, status]
@@ -540,6 +541,31 @@ class GroupProjectHelperModel {
       WHERE id = ${projectId}
     `);
     this.setCurrentProject(projectId, true);
+  }
+
+  joinUserProject() {
+    const projectId = this.currentProject.id;
+    this.db.run(
+      `INSERT INTO projectUser (userId, projectId) VALUES (${this.currentUser.id}, ${projectId})`
+    );
+  }
+  
+  leaveUserProject(projectid) {
+    this.db.run(
+      `DELETE FROM projectUser
+      WHERE userId = ${this.currentUser.id}
+      AND projectId = ${projectid}`
+    );
+  }
+
+  isInProject(projectid) {
+    const result = this.db.exec(
+        `SELECT * FROM projectUser
+        WHERE userId = ${this.currentUser.id}
+        AND projectId = ${projectid}`
+    )
+
+    return result.length > 0
   }
 
   createMeeting(details) {

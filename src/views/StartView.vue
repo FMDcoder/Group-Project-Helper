@@ -33,6 +33,7 @@
           <div class="button-row">
             <NewProjBtn :model="model" />
             <FindProjects :model="model" />
+            <LeaveProjects :model="model"/>
           </div>
 
           
@@ -47,10 +48,11 @@ import Deadlines from "../components/Deadlines.vue";
 import FindProjects from "@/components/FindProjects.vue";
 import NewProjBtn from "@/components/NewProjBtn.vue";
 import UserProjects from "@/components/UserProjects.vue";
+import LeaveProjects from "@/components/LeaveProjects.vue";
 
 export default {
   props: ["model", "reRenderKey"],
-  components: { Deadlines, NewProjBtn, UserProjects, FindProjects },
+  components: { Deadlines, NewProjBtn, UserProjects, FindProjects, LeaveProjects},
 };
 </script>
 
