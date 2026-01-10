@@ -86,7 +86,7 @@ const MOCK_DATA = {
     // [name, description, deadline, projectId, status]
     ["Start view", "Front page of application", "2026-01-10 22:00:00", 1, 3],
     ["Project view", "Details about the projects", "2026-01-11 23:59:59", 1, 3],
-    ["Taskboard view", "A way to structure what need to be done", "2026-01-11 10:01:00", 1, 3],
+    ["Taskboard view", "A way to structure what need to be done", "2026-01-10 10:01:00", 1, 3],
     ["Bugfixes", "Not that our application has any bugs", "2026-01-11 18:30:00", 1, 2],
     ["Final tweaks", "Bits and bobs", "2026-01-11 23:59:59", 1, 2],
     ["Presentation", "Prepare to share the awesomeness to the world", "2026-01-12 11:59:59", 1, 1],
@@ -384,22 +384,26 @@ class GroupProjectHelperModel {
 
   getTasksByDeadline() {
     if (!this.currentUser?.id) return [];
-    const now = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
     const soon = new Date();
     soon.setDate(soon.getDate() + 3);
-    this.printUnassignedTasksDueSoon();
+
     return sqlToJs(
       this.db.exec(`
-        SELECT task.id, task.name, deadline, project.name AS projectName, project.id AS projectId
-        FROM project, task LEFT JOIN taskUser
+        SELECT task.id, task.name, deadline, userId,
+          project.name AS projectName, project.id AS projectId
+        FROM project, status, task LEFT JOIN taskUser
         ON task.id = taskUser.taskId
         WHERE task.projectId = project.id
+        AND status.id = task.status
+        AND status.name != '${MOCK_DATA.status[2][0]}'
         AND (
           taskUser.userId = ${this.currentUser.id}
           OR (
             userId IS NULL
             AND task.deadline
-            BETWEEN '${this.toSqlDatetime(now)}'
+            BETWEEN '${this.toSqlDatetime(yesterday)}'
             AND '${this.toSqlDatetime(soon)}'
           )
         )
@@ -408,7 +412,39 @@ class GroupProjectHelperModel {
     );
   }
   
+  getProjectTasksByDeadline() {
+    if (!this.currentUser?.id) return [];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 3);
+
+    return sqlToJs(
+      this.db.exec(`
+        SELECT task.id, task.name, deadline, userId,
+          project.name AS projectName
+        FROM project, status, task LEFT JOIN taskUser
+        ON task.id = taskUser.taskId
+        WHERE task.projectId = project.id
+        AND status.id = task.status
+        AND status.name != '${MOCK_DATA.status[2][0]}'
+        AND project.id=${this.currentProject.id}
+        AND (
+          taskUser.userId = ${this.currentUser.id}
+          OR (
+            userId IS NULL
+            AND task.deadline
+            BETWEEN '${this.toSqlDatetime(yesterday)}'
+            AND '${this.toSqlDatetime(soon)}'
+          )
+        )
+        ORDER BY deadline
+      `)
+    );
+  }
+
   printUnassignedTasksDueSoon() {
+    // for debugging
     const now = new Date();
     const soon = new Date();
     soon.setDate(soon.getDate() + 3);
@@ -424,20 +460,6 @@ class GroupProjectHelperModel {
       AND '${this.toSqlDatetime(soon)}'
       `));
     console.log(t);
-  }
-
-  getProjectTasksByDeadline() {
-    return sqlToJs(
-      this.db.exec(`
-        SELECT task.id, task.name, deadline, project.name AS projectName
-        FROM task, project, taskUser
-        WHERE task.projectId = project.id
-        AND project.id=${this.currentProject.id}
-        AND task.id = taskUser.taskId
-        AND taskUser.userId = ${this.currentUser.id}
-        ORDER BY deadline
-      `)
-    );
   }
 
   getProjectMeetings() {
