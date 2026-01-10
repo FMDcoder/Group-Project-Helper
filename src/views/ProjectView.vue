@@ -87,7 +87,7 @@
 
             <label class="field">
               <span class="field-label">Date</span>
-              <input v-model="newMeeting.date" type="date" />
+              <input v-model="newMeeting.date" type="datetime-local" />
             </label>
 
             <label class="field">
