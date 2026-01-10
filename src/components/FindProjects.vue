@@ -21,7 +21,6 @@
             @keydown.esc="closePopup"
           />
 
-          <!-- When user types -->
           <p v-if="searchQuery.trim()" class="meta">
             {{ filteredProjects.length }} result{{ filteredProjects.length === 1 ? "" : "s" }}
           </p>
@@ -29,23 +28,38 @@
           <!-- Results -->
           <ul v-if="searchQuery.trim() && filteredProjects.length" class="results">
             <li v-for="p in filteredProjects" :key="p.id" class="resultRow">
-              <router-link
-                to="/project"
-                class="resultLink"
-                @click="selectProject(p.id)"
+              <div
+                class="resultItem"
+                :class="{ selected: selectedProjectId === p.id }"
+                role="button"
+                tabindex="0"
+                @click="selectRow(p)"
+                @keydown.enter.prevent="selectRow(p)"
               >
-                <span class="resultName">
-                  <template
-                    v-for="(part, i) in highlightParts(p.name, searchQuery)"
-                    :key="i"
-                  >
-                    <mark v-if="part.match" class="hl">{{ part.text }}</mark>
-                    <span v-else>{{ part.text }}</span>
-                  </template>
-                </span>
+                <div class="left">
+                  <span class="resultName">
+                    <template v-for="(part, i) in highlightParts(p.name, searchQuery)" :key="i">
+                      <mark v-if="part.match" class="hl">{{ part.text }}</mark>
+                      <span v-else>{{ part.text }}</span>
+                    </template>
+                  </span>
 
-                <span class="badge">{{ p.progress }}%</span>
-              </router-link>
+                  <span class="sub">Progress: {{ p.progress }}%</span>
+                </div>
+
+                <div class="right">
+                  <span class="badge">{{ p.progress }}%</span>
+
+                  <!-- Join button only shows on selected row -->
+                  <button
+                    v-if="selectedProjectId === p.id"
+                    class="joinBtn"
+                    @click.stop="joinSelected"
+                  >
+                    Join
+                  </button>
+                </div>
+              </div>
             </li>
           </ul>
 
@@ -59,8 +73,18 @@
             Please type something to search for a project.
           </p>
 
+          <!-- Optional footer actions -->
           <div class="footer">
             <button class="closeBtn" @click="closePopup">Close</button>
+
+            <button
+              class="joinFooterBtn"
+              :disabled="!selectedProject"
+              @click="joinSelected"
+              title="Select a project first"
+            >
+              Join selected
+            </button>
           </div>
         </div>
       </div>
@@ -77,11 +101,11 @@ export default {
     return {
       isOpen: false,
       searchQuery: "",
+      selectedProjectId: null,
     };
   },
 
   computed: {
-    // Always return an array so Vue never crashes
     projects() {
       return this.model?.getProjects?.() ?? [];
     },
@@ -94,6 +118,19 @@ export default {
         String(project?.name ?? "").toLowerCase().includes(query)
       );
     },
+
+    selectedProject() {
+      return this.projects.find((p) => p.id === this.selectedProjectId) ?? null;
+    },
+  },
+
+  watch: {
+    // If user changes search, keep selection only if it still exists in results
+    searchQuery() {
+      if (!this.selectedProjectId) return;
+      const stillVisible = this.filteredProjects.some((p) => p.id === this.selectedProjectId);
+      if (!stillVisible) this.selectedProjectId = null;
+    },
   },
 
   methods: {
@@ -105,18 +142,30 @@ export default {
     closePopup() {
       this.isOpen = false;
       this.searchQuery = "";
+      this.selectedProjectId = null;
     },
 
     setCurrentProject(id) {
       this.model?.setCurrentProject?.(id);
     },
 
-    selectProject(id) {
-      this.setCurrentProject(id);
+    selectRow(project) {
+      this.selectedProjectId = project.id;
+    },
+
+    joinSelected() {
+      if (!this.selectedProjectId) return;
+
+      this.setCurrentProject(this.selectedProjectId);
+
+      // If you want to navigate to the project page:
+      if (this.$router) {
+        this.$router.push("/project");
+      }
+
       this.closePopup();
     },
 
-    // Highlight matched query safely (no v-html)
     highlightParts(text, query) {
       const t = String(text ?? "");
       const q = String(query ?? "").trim();
@@ -167,7 +216,7 @@ export default {
 /* Popup */
 .popup {
   background: white;
-  width: min(620px, 100%);
+  width: min(680px, 100%);
   border-radius: 16px;
   padding: 18px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
@@ -181,22 +230,15 @@ export default {
   gap: 12px;
   margin-bottom: 12px;
 }
-
 .header h4 {
   margin: 0;
   font-size: 18px;
 }
-
 .x {
   border: none;
   background: transparent;
   font-size: 18px;
   cursor: pointer;
-}
-
-/* Inner wrapper */
-.projects {
-  max-width: 100%;
 }
 
 /* Input */
@@ -209,20 +251,17 @@ input {
   outline: none;
   font-size: 14px;
 }
-
 input:focus {
   border-color: #94a3b8;
   box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.35);
 }
 
-/* Meta line */
 .meta {
   margin: 10px 0 8px;
   font-size: 12px;
   color: #6b7280;
 }
 
-/* Results */
 .results {
   list-style: none;
   padding: 0;
@@ -236,35 +275,56 @@ input:focus {
   border-top: 1px solid #eef2f7;
 }
 
-.resultLink {
+/* Clickable row */
+.resultItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 12px;
-  text-decoration: none;
-  color: inherit;
   background: white;
-  transition: background 120ms ease;
+  cursor: pointer;
+  transition: background 120ms ease, box-shadow 120ms ease;
 }
-
-.resultLink:hover {
+.resultItem:hover {
   background: #f8fafc;
 }
 
+/* Selected highlight */
+.resultItem.selected {
+  background: #eef6ff;
+  box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .resultName {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
 }
 
-/* Match highlight */
+.sub {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Highlight match */
 .hl {
   background: #fff3bf;
   padding: 0 3px;
   border-radius: 6px;
 }
 
-/* Progress badge */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .badge {
   font-size: 12px;
   padding: 4px 8px;
@@ -275,10 +335,27 @@ input:focus {
   white-space: nowrap;
 }
 
+/* Join button on selected row */
+button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.joinBtn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+.joinBtn:hover {
+  filter: brightness(0.95);
+}
+
 /* Hints */
 .hint {
   color: #6b7280;
-  font-style: normal;
   margin-top: 10px;
 }
 
@@ -286,14 +363,30 @@ input:focus {
 .footer {
   margin-top: 14px;
   display: flex;
+  gap: 10px;
   justify-content: flex-end;
 }
 
-.closeBtn {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: white;
+.closeBtn,
+.joinFooterBtn {
+  background-color: #2563eb;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: none;
   cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.joinFooterBtn {
+  border-color: #dbeafe;
+}
+
+.joinFooterBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
+
