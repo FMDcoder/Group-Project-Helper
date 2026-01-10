@@ -84,9 +84,12 @@ const MOCK_DATA = {
   ],
   task: [
     // [name, description, deadline, projectId, status]
-    ["Start view", "...", "2026-01-10 22:00:00", 1, 2],
-    ["Project view", "...", "2026-01-11 23:59:59", 1, 1],
-    ["Task board view", "...", "2026-01-10 23:59:59", 1, 1],
+    ["Start view", "Front page of application", "2026-01-10 22:00:00", 1, 3],
+    ["Project view", "Details about the projects", "2026-01-11 23:59:59", 1, 3],
+    ["Taskboard view", "A way to structure what need to be done", "2026-01-11 10:01:00", 1, 3],
+    ["Bugfixes", "Not that our application has any bugs", "2026-01-11 18:30:00", 1, 2],
+    ["Final tweaks", "Bits and bobs", "2026-01-11 23:59:59", 1, 2],
+    ["Presentation", "Prepare to share the awesomeness to the world", "2026-01-12 11:59:59", 1, 1],
     ["Learn songs", "Learn the keyboard parts of the songs", "2026-03-15 10:00:00", 2, 1],
     ["Read the book", "Well, what are you waiting for?", "2026-02-24 11:00:00", 5, 2],
     ["Long term task", "It could have been december", "2027-01-05 09:30:00", 4, 1],
@@ -393,6 +396,25 @@ class GroupProjectHelperModel {
         ORDER BY time
       `)
     );
+  }
+  
+  getProjectProgress() {
+    if (!this.currentProject?.id) return 0;
+    const result = sqlToJs(this.db.exec(`
+      SELECT count(*) * (SELECT value FROM status WHERE name = "Done") AS total,
+      sum(value) AS points
+      FROM task, status
+      WHERE projectId = ${this.currentProject.id}
+      AND task.status = status.id`))[0];
+    if (result.total == 0) return 0;
+
+    //const statusPoints = sqlToJs(this.db.exec(
+    //  `SELECT sum(value) FROM task, status
+    //  WHERE projectId = ${this.currentProject.id}
+    //  AND task.status = status.id`));
+
+    this.currentProject.progress = Math.floor(result.points * 100 / result.total);
+    return this.currentProject.progress;
   }
   
   meetingTimeExists(details) {
