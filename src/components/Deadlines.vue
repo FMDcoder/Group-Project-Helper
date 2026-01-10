@@ -65,12 +65,17 @@ export default {
       const now = Date.now();
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
       const oneWeekAhead = new Date();
       oneWeekAhead.setDate(oneWeekAhead.getDate() + 7);
 
       let datePart;
       const ds = d.toDateString();
-      if (ds === (new Date()).toDateString()) {
+      if (ds === yesterday.toDateString()) {
+        datePart = "Yestarday";
+      }
+      else if (ds === (new Date()).toDateString()) {
         datePart = "Today";
       }
       else if (ds === tomorrow.toDateString()) {
@@ -91,10 +96,12 @@ export default {
         hour12: false,
       }); // "22:00"
 
+      let infoText = "";
       let timeLeft = "";
       const diffMs = d.getTime() - now;
 
       if (diffMs < 0) {
+        infoText = "Missed! "
         timeLeft = " (past)";
       } else {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -110,7 +117,7 @@ export default {
         }
       }
 
-      return `${datePart}, ${time}  ${timeLeft}`;
+      return `${infoText}${datePart}, ${time}  ${timeLeft}`;
     },
 
     setCurrentProject(projectId) {
