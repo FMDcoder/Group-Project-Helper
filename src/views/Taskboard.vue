@@ -31,10 +31,15 @@
             <span class="field-label">Description</span>
             <input v-model.trim="newTask.description" type="text" placeholder="Short description" />
           </label>
+          
+          <label class="field">
+            <span class="field-label">Date</span>
+            <input v-model="newTask.date" type="date" />
+          </label>
 
           <label class="field">
-            <span class="field-label">Deadline</span>
-            <input v-model="newTask.deadline" type="datetime-local" />
+            <span class="field-label">Time</span>
+            <input v-model="newTask.time" type="time" />
           </label>
 
           <div class="actions">
@@ -311,6 +316,12 @@ function formatDeadline(deadline) {
 
 function addTask() {
   if (isAddDisabled.value) return;
+
+  const [year, month, day] = newTask.value.date.split('-').map(Number);
+  const [hours, minutes] = newTask.value.time.split(':').map(Number);
+
+  // JS Date months are 0-indexed
+  newTask.value.deadline = new Date(year, month - 1, day, hours, minutes); 
 
   props.model.createTask({
     name: newTask.value.name,
