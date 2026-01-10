@@ -115,7 +115,7 @@ export default {
       if (!query) return [];
 
       return this.projects.filter((project) =>
-        String(project?.name ?? "").toLowerCase().includes(query)
+        String(project?.name ?? "").toLowerCase().includes(query) && !this.model.isInProject(project?.id)
       );
     },
 
@@ -157,6 +157,7 @@ export default {
       if (!this.selectedProjectId) return;
 
       this.setCurrentProject(this.selectedProjectId);
+      this.model.joinUserProject()
 
       // If you want to navigate to the project page:
       if (this.$router) {
