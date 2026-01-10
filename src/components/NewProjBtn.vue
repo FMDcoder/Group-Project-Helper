@@ -24,6 +24,8 @@
             />
           </label>
 
+          <p v-if="error" class="error">{{ error }}</p>
+
           <label class="field">
             <span class="field-label">Description</span>
             <textarea
@@ -33,8 +35,7 @@
             ></textarea>
           </label>
 
-          <p v-if="error" class="error">{{ error }}</p>
-          <p v-else-if="isOkDisabled" class="hint">
+          <p v-if="isOkDisabled && !error" class="hint">
             Fill in both project name and description to enable OK.
           </p>
         </div>
