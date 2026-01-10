@@ -66,7 +66,30 @@ import Dropdown from './components/Dropdown.vue';
       },
       handleOptionSelected(option) {
         console.log("Selected option:", option);
+      },
+        navigateKey(event){
+
+          if (!event.ctrlKey){
+            return
+          }
+        
+
+        if(event.key==='1'){
+          this.$router.push("/")
+        }
+        if(event.key==='2'){
+          this.$router.push("/project")
+        }
+        if(event.key==='3'){
+          this.$router.push("/taskboard")
+        }
       }
+    },
+    mounted(){
+      window.addEventListener("keydown",this.navigateKey)
+    },
+    beforeUnmount(){
+      window.removeEventListener("keydown",this.navigateKey)
     }
   }
   
