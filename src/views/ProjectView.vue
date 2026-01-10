@@ -50,6 +50,7 @@
               <div class="meeting-main">
                 <div class="meeting-title">{{ m.name }}</div>
                 <div class="meeting-date">{{ m.time }}</div>
+                <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
               </div>
 
               <button class="btn btn-ghost" @click="removeMeeting(m.id)">Delete</button>
