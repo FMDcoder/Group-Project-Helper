@@ -46,7 +46,7 @@
           <p v-if="isAddDisabled" class="hint">Fill in title + description to enable Add.</p>
         </div>
 
-        <div v-for="t in todoTasks" :key="t.id" class="task">
+        <div v-for="(t, index) in todoTasks" :key="t.id" class="task">
           <div class="task-header">
             <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge todo">To Do</span>
@@ -70,7 +70,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -109,7 +109,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -149,7 +149,7 @@
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" @click="assignToMe(t.id)">Assign to me</button>
+            <button class="btn" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
@@ -221,6 +221,9 @@
 <script setup>
 import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import UserProjects from "@/components/UserProjects.vue";
+//import { f } from "vue-router";
+import { task } from "@/dat";
+import { reactive } from 'vue'
 
 const props = defineProps(["model"]);
 
@@ -265,6 +268,9 @@ const isEditDisabled = computed(() => {
 let escEdit = null;
 let escDelete = null;
 
+const getAssignedTask = (id) => {
+  return assignedTaskslist.find(v => v.id == id)
+}
 function loadBoard() {
   if (!currentProjectId.value) {
     tasks.value = [];
@@ -384,6 +390,23 @@ function confirmDelete() {
   props.model.deleteTask(taskToDelete.value.id);
   closeDelete();
   loadBoard();
+}
+
+function handleAssignment(taskid) {
+  if(!props.model.isUserPartOfTask(taskid)) {
+    assignToMe(taskid)
+    updateAssignedTasklist(taskid, true)
+  }
+  else {
+    unAssignUserFromTask(taskid)
+    updateAssignedTasklist(taskid, false)
+  }
+  props.model.notifyObservers()
+}
+
+function unAssignUserFromTask(taskid) {
+    props.model.unassignTaskFromCurrentUser(taskid)
+    loadBoard()
 }
 
 function assignToMe(taskId) {

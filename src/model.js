@@ -314,6 +314,28 @@ class GroupProjectHelperModel {
     this.notifyObservers();
   }
 
+  unassignTaskFromCurrentUser(taskId) {
+    this.db.run(`
+      DELETE FROM taskUser
+      WHERE 
+          userId = ${this.currentUser.id}
+          AND 
+          taskId = ${taskId}
+    `);
+    this.notifyObservers();
+  }
+
+  isUserPartOfTask(taskId) {
+    const result = this.db.exec(`
+      SELECT * FROM taskUser
+      WHERE 
+          userId = ${this.currentUser.id}
+          AND 
+          taskId = ${taskId}
+    `);
+    return result.length > 0
+  }
+  
   deleteTask(taskId) {
     this.db.run(`DELETE FROM taskUser WHERE taskId = ${taskId}`);
     this.db.run(`DELETE FROM task WHERE id = ${taskId}`);
