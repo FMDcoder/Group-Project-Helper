@@ -364,11 +364,15 @@ input:focus {
 
 .closeBtn,
 .joinFooterBtn {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: white;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: none;
   cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
 }
 
 .joinFooterBtn {
