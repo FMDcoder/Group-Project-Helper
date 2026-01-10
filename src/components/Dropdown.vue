@@ -92,7 +92,7 @@ export default {
     setModalState(state)
     {
       this.modalState = state;
-      if (state) this.canClose = false;
+      this.canClose = !state;
     }
   },
   mounted(){

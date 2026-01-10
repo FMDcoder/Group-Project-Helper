@@ -1,16 +1,19 @@
 <template>
   <section class="page">
-    <div v-if="projectSelected()">
-      <div class="page-header">
-        <h2>
-          {{ getCurrentProjectName() }}
-          <div class="edit-btn">
-            <EditProjectBtn :model="model" />
-          </div>
-        </h2>
-        <p class="subtitle">Manage deadlines, progress and meetings for the current project.</p>
-      </div>
+    <div class="page-header">
+      <h2>
+        Project Overview
+        <!--{{ getCurrentProjectName() || "" }}-->
+        <div class="edit-btn">
+          <EditProjectBtn :model="model" />
+        </div>
+      </h2>
+      <p class="subtitle">{{ projectSelected() ?
+          "Manage deadlines, progress and meetings for the current project." :
+          "Please select a project below to view the details." }}</p>
+    </div>
 
+    <div v-if="projectSelected()">
       <div class="layout">
         <!-- LEFT: Progress + deadlines -->
         <div class="card">
@@ -31,7 +34,7 @@
           <div class="divider"></div>
 
           <div class="card-header">
-            <h2 class="card-title">Upcoming Deadlines</h2>
+            <h3 class="card-title">Upcoming Deadlines</h3>
           </div>
 
           <div class="deadlines-list">
@@ -42,7 +45,7 @@
         <!-- RIGHT: Meetings -->
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">Meetings</h2>
+            <h3 class="card-title">Meetings</h3>
           </div>
 
           <ul class="meetings">
@@ -201,8 +204,6 @@
     </div>
 
     <div v-else class="card">
-      <h1>Select a project</h1>
-      <p class="subtitle">Please select one of your projects below to view its details.</p>
       <div class="projects-wrapper">
         <UserProjects :model="props.model" :redirect="false" />
       </div>
@@ -408,7 +409,7 @@ function projectSelected() {
 }
 
 function getCurrentProjectName() {
-  return props.model.getCurrentProject().name;
+  return props.model.getCurrentProject()?.name;
 }
 
 function getProjectMeetings() {

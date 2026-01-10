@@ -1,14 +1,17 @@
 <template>
   <section class="page">
     <div class="page-header">
-      <h1>Task Board</h1>
-      <p class="subtitle">
-        Manage tasks for: <b>{{ currentProjectName || "No project selected" }}</b>
+      <h2>Task Board</h2>
+      <p v-if="currentProjectId" class="subtitle">
+        Manage tasks for: <b>{{ currentProjectName }}</b>
       </p>
+      <p v-else class="subtitle">Select a project to view tasks.</p>
     </div>
 
     <div v-if="!currentProjectId" class="card">
-      <p class="subtitle">Select a project to view tasks.</p>
+      <div class="projects-wrapper">
+        <UserProjects :model="props.model" :redirect="false" />
+      </div>
     </div>
 
     <div v-else class="taskboard">
@@ -217,6 +220,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
+import UserProjects from "@/components/UserProjects.vue";
 
 const props = defineProps(["model"]);
 
