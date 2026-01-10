@@ -53,6 +53,7 @@
               </div>
 
               <button class="btn btn-ghost" @click="removeMeeting(m.id)">Delete</button>
+              <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
             </li>
 
             <li v-if="getProjectMeetings().length === 0" class="empty">
@@ -114,6 +115,55 @@
           </div>
         </div>
       </div>
+
+      <!-- Edit Model -->
+      <div v-if="showModalEdit" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
+          <div class="modal-header">
+            <h3 class="modal-title">Edit meeting</h3>
+            <button class="btn btn-ghost" @click="closeModalEdit" aria-label="Close">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <label class="field">
+              <span class="field-label">Name</span>
+              <input
+                ref="meetingEditNameInput"
+                v-model="newMeeting.title"
+                type="text"
+                placeholder="e.g., Weekly check-in"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Date</span>
+              <input v-model="newMeeting.date" type="datetime-local" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Place</span>
+              <input v-model="newMeeting.place" type="text" />
+            </label>
+
+            <p v-if="isAddDisabled" class="hint">
+              Fill in both name and date to enable Add.
+            </p>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn" @click="closeModalEdit">Cancel</button>
+
+            <button
+              class="btn btn-primary"
+              @click="confirmEdit"
+              :disabled="isAddDisabled"
+              :aria-disabled="isAddDisabled"
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-else class="card">
@@ -137,22 +187,30 @@ const props = defineProps(["model"]);
 const project = ref({});
 const meetings = ref([]);
 const showModal = ref(false);
+const showModalEdit = ref(false);
 const newMeeting = ref({ title: "", date: "" , place: ""});
 
 /* ✅ Autofocus reference */
 const meetingNameInput = ref(null);
+const meetingEditNameInput = ref(null);
+const update = ref([]);
+
+function isValidDate(value) {
+  return value instanceof Date && !isNaN(value.getTime());
+}
 
 /* ✅ Disable Add until valid */
 const isAddDisabled = computed(() => {
   return (
     newMeeting.value.title.trim().length === 0 ||
-    newMeeting.value.date.trim().length === 0 ||
+    isValidDate(newMeeting.value.date) ||
     newMeeting.value.place.trim().length === 0
   );
 });
 
 /* ✅ ESC handler */
 let escHandler = null;
+let escHandlerEdit = null;
 
 function openModal() {
   showModal.value = true;
@@ -169,6 +227,20 @@ function openModal() {
   window.addEventListener("keydown", escHandler);
 }
 
+function openModalEdit() {
+  showModalEdit.value = true;
+
+  // Autofocus on Name
+  nextTick(() => {
+    meetingEditNameInput.value?.focus?.();
+  });
+
+  escHandlerEdit = (e) => {
+    if (e.key === "Escape") closeModalEdit();
+  };
+  window.addEventListener("keydown", escHandlerEdit);
+}
+
 function closeModal() {
   showModal.value = false;
   newMeeting.value = { title: "", date: "" };
@@ -176,6 +248,16 @@ function closeModal() {
   if (escHandler) {
     window.removeEventListener("keydown", escHandler);
     escHandler = null;
+  }
+}
+
+function closeModalEdit() {
+  showModalEdit.value = false;
+  newMeeting.value = { title: "", date: "" };
+
+  if (escHandlerEdit) {
+    window.removeEventListener("keydown", escHandlerEdit);
+    escHandlerEdit = null;
   }
 }
 
@@ -201,8 +283,53 @@ function confirmAdd() {
   closeModal();
 }
 
-function removeMeeting(id) {
+function confirmEdit() {
+  if (isAddDisabled.value) return;
+
+  const meetingDetails = {
+    //id: Date.now(),             // replace with DB id if you use backend
+    name: newMeeting.value.title,
+    time: newMeeting.value.date,
+    place: newMeeting.value.place,
+    id: newMeeting.value.id
+    //deadline: this.form.deadline
+  };
+
+  //meetings.value.push({
+  //  id: Date.now(),
+  //  title: newMeeting.value.title,
+  //  date: newMeeting.value.date,
+  //});
+  
+  props.model.updateMeeting(meetingDetails);
+  closeModalEdit();
+}
+
+async function removeMeeting(id) {
+  await props.model.deleteMeeting(id)
   meetings.value = meetings.value.filter((m) => m.id !== id);
+
+  // force the damn update >:(
+  showModalEdit.value = true;
+  showModalEdit.value = false;
+}
+
+function toDatetimeLocal(date) {
+  const d = new Date(date);
+
+  const pad = n => String(n).padStart(2, '0');
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function editMeeting(id) {
+    openModalEdit()
+    newMeeting.value.id = id
+    const currentMeeting = getProjectMeetings().find(m => m.id === id);
+
+    this.newMeeting.title = currentMeeting.name
+    this.newMeeting.date = toDatetimeLocal(currentMeeting.time)
+    this.newMeeting.place = currentMeeting.place
 }
 
 function projectSelected() {

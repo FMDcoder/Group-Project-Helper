@@ -354,6 +354,26 @@ class GroupProjectHelperModel {
         
         this._addUsersToMeeting(meetingId, this.currentProject.id);
     }
+
+    updateMeeting(details) {
+        this.db.run(
+            `UPDATE meeting
+            SET 
+                name = '${details.name}',
+                time = '${details.time}',
+                place = '${details.place}'
+            WHERE id = ${details.id}`
+        );
+    }
+
+    deleteMeeting(id) {
+        this._removeUsersToMeeting(id, this.currentProject.id)
+
+        this.db.run(
+            `DELETE FROM meeting
+            WHERE id = ${id}`
+        );
+    }
     
     _addUsersToMeeting(meetingId, projectId) {
         let users = sqlToJs(this.db.exec(`SELECT userId FROM projectUser
@@ -364,6 +384,22 @@ class GroupProjectHelperModel {
             `INSERT INTO userMeeting (userId, meetingId)
             VALUES (${u.userId}, ${meetingId})`)
         );
+    }
+
+    _removeUsersToMeeting(meetingId, projectId) {
+        let users = sqlToJs(this.db.exec(`
+                SELECT userId
+                FROM projectUser
+                WHERE projectId = ${projectId}
+        `));
+      
+      users.forEach(u =>
+          this.db.run(`
+                DELETE FROM userMeeting
+                WHERE userId = ${u.userId}
+                AND meetingId = ${meetingId}
+          `)
+      );
     }
 }
 export default GroupProjectHelperModel
