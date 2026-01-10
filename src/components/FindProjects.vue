@@ -336,6 +336,11 @@ input:focus {
 }
 
 /* Join button on selected row */
+button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
 .joinBtn {
   padding: 8px 10px;
   border-radius: 10px;
