@@ -32,13 +32,10 @@
 
           <div class="button-row">
             <NewProjBtn :model="model" />
+            <FindProjects :model="model" />
           </div>
 
-          <div class="section">
-            <h3 class="section-title">Find project</h3>
-            <FindProjects :model="model" />
-            <p class="helper">Type a project name to search.</p>
-          </div>
+          
         </div>
       </div>
     </div>
