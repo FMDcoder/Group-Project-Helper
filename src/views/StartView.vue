@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <div class="page-header">
-      <h2>Home</h2>
+      <!--h2>Home</h2-->
       <p class="subtitle">Overview of upcoming deadlines and active projects.</p>
     </div>
 

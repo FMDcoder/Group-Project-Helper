@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <div class="page-header">
-      <h2>Task Board</h2>
+      <h2 v-if="!currentProjectId">Task Board</h2>
       <p v-if="currentProjectId" class="subtitle">
         Manage tasks for: <b>{{ currentProjectName }}</b>
       </p>
@@ -844,7 +844,8 @@ onBeforeUnmount(() => {
 .page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 0;
+  padding: 18px;
+  box-sizing: content-box;
 }
 
 .page-header { margin-bottom: 14px; }

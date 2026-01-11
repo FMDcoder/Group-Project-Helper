@@ -3,9 +3,13 @@
     <div class="page-header">
       <h2>
         Project Overview
-        <!--{{ getCurrentProjectName() || "" }}-->
-        <div v-if="projectSelected()" class="edit-btn">
-          <EditProjectBtn :model="model" />
+        <div v-if="projectSelected()" style="display: inline">
+          <div class="project-name">
+            — {{ getCurrentProjectName() || "" }}
+          </div>
+          <div class="edit-btn">
+            <EditProjectBtn :model="model" />
+          </div>
         </div>
       </h2>
       <p class="subtitle">{{ projectSelected() ?
@@ -542,6 +546,11 @@ onBeforeUnmount(() => {
 
 .page-header {
   margin-bottom: 14px;
+}
+
+.project-name {
+  display: inline-block;
+  font-weight: 500;
 }
 
 .subtitle {
