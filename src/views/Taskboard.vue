@@ -47,11 +47,7 @@
 
           <label class="field">
             <span class="field-label">Description</span>
-            <input
-              v-model.trim="newTask.description"
-              type="text"
-              placeholder="Short description"
-            />
+            <input v-model.trim="newTask.description" type="text" placeholder="Short description" />
           </label>
 
           <div class="field-row">
@@ -84,19 +80,19 @@
           draggable="true"
           @dragstart="onDragStart(t)"
           @dragend="onDragEnd"
-          :class="{ open: expandedTaskId === t.id }"
+          :class="{ open: isTaskOpen(t.id) }"
         >
           <!-- DROPDOWN HEADER -->
           <div class="task-header clickableHead" @click="toggleTask(t.id)">
             <div class="head-left">
-              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
             </div>
             <span class="badge todo">To Do</span>
           </div>
 
           <!-- DROPDOWN BODY -->
-          <div v-if="expandedTaskId === t.id" class="task-body">
+          <div v-if="isTaskOpen(t.id)" class="task-body">
             <div class="task-compact">
               <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
@@ -157,17 +153,17 @@
           draggable="true"
           @dragstart="onDragStart(t)"
           @dragend="onDragEnd"
-          :class="{ open: expandedTaskId === t.id }"
+          :class="{ open: isTaskOpen(t.id) }"
         >
           <div class="task-header clickableHead" @click="toggleTask(t.id)">
             <div class="head-left">
-              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
             </div>
             <span class="badge progress">In Progress</span>
           </div>
 
-          <div v-if="expandedTaskId === t.id" class="task-body">
+          <div v-if="isTaskOpen(t.id)" class="task-body">
             <div class="task-compact">
               <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
@@ -229,17 +225,17 @@
           draggable="true"
           @dragstart="onDragStart(t)"
           @dragend="onDragEnd"
-          :class="{ open: expandedTaskId === t.id }"
+          :class="{ open: isTaskOpen(t.id) }"
         >
           <div class="task-header clickableHead" @click="toggleTask(t.id)">
             <div class="head-left">
-              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
             </div>
             <span class="badge done">Done</span>
           </div>
 
-          <div v-if="expandedTaskId === t.id" class="task-body">
+          <div v-if="isTaskOpen(t.id)" class="task-body">
             <div class="task-compact">
               <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
@@ -357,12 +353,22 @@ const showDelete = ref(false);
 const taskToDelete = ref(null);
 const moveOpenId = ref(null);
 
-/** ✅ Dropdown open state (one task at a time) */
-const expandedTaskId = ref(null);
-function toggleTask(taskId) {
-  // close move panel if switching tasks
-  if (expandedTaskId.value !== taskId) moveOpenId.value = null;
-  expandedTaskId.value = expandedTaskId.value === taskId ? null : taskId;
+/* ✅ MULTI-OPEN DROPDOWN STATE */
+const expandedTaskIds = ref(new Set());
+
+function isTaskOpen(id) {
+  return expandedTaskIds.value.has(id);
+}
+
+function toggleTask(id) {
+  const next = new Set(expandedTaskIds.value);
+  if (next.has(id)) {
+    next.delete(id);
+    if (moveOpenId.value === id) moveOpenId.value = null; // close move panel if closing task
+  } else {
+    next.add(id);
+  }
+  expandedTaskIds.value = next;
 }
 
 const newTask = ref({
@@ -402,7 +408,7 @@ let escDelete = null;
 function loadBoard() {
   if (!currentProjectId.value) {
     tasks.value = [];
-    expandedTaskId.value = null;
+    expandedTaskIds.value = new Set();
     moveOpenId.value = null;
     return;
   }
@@ -415,9 +421,15 @@ function loadBoard() {
 
   tasks.value = props.model.getProjectTasksForBoard();
 
-  // if expanded task no longer exists, close it
-  if (expandedTaskId.value && !tasks.value.some(t => t.id === expandedTaskId.value)) {
-    expandedTaskId.value = null;
+  // prune open tasks that no longer exist
+  const existing = new Set(tasks.value.map(t => t.id));
+  const nextOpen = new Set();
+  expandedTaskIds.value.forEach(id => {
+    if (existing.has(id)) nextOpen.add(id);
+  });
+  expandedTaskIds.value = nextOpen;
+
+  if (moveOpenId.value && !existing.has(moveOpenId.value)) {
     moveOpenId.value = null;
   }
 }
