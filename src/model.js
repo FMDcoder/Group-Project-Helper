@@ -392,7 +392,8 @@ class GroupProjectHelperModel {
 
     return sqlToJs(
       this.db.exec(`
-        SELECT task.id, task.name, deadline, project.name AS projectName, project.id AS projectId
+        SELECT task.id, task.name, deadline, taskUser.userId AS userId,
+          project.name AS projectName, project.id AS projectId
         FROM project, task, projectUser, status LEFT JOIN taskUser
         ON task.id = taskUser.taskId
         WHERE task.projectId = project.id
