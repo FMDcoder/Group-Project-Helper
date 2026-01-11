@@ -16,7 +16,13 @@
 
     <div v-else class="taskboard">
       <!-- TO DO -->
-      <div class="column">
+      <div
+        class="column"
+        @dragover.prevent="onDragOver(statusIds.todo)"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop(statusIds.todo)"
+        :class="{ dropzone: dragOverStatusId === statusIds.todo }"
+      >
         <div class="col-head">
           <h2>To Do</h2>
 
@@ -41,7 +47,11 @@
 
           <label class="field">
             <span class="field-label">Description</span>
-            <input v-model.trim="newTask.description" type="text" placeholder="Short description" />
+            <input
+              v-model.trim="newTask.description"
+              type="text"
+              placeholder="Short description"
+            />
           </label>
 
           <div class="field-row">
@@ -66,155 +76,209 @@
           <p v-if="isAddDisabled" class="hint">Fill in title + description to enable Add.</p>
         </div>
 
-        <div v-for="t in todoTasks" :key="t.id" class="task compact">
-          <div class="task-header">
-            <h3 class="task-title">{{ t.name }}</h3>
+        <!-- Tasks -->
+        <div
+          v-for="t in todoTasks"
+          :key="t.id"
+          class="task compact"
+          draggable="true"
+          @dragstart="onDragStart(t)"
+          @dragend="onDragEnd"
+          :class="{ open: expandedTaskId === t.id }"
+        >
+          <!-- DROPDOWN HEADER -->
+          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+            <div class="head-left">
+              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <h3 class="task-title">{{ t.name }}</h3>
+            </div>
             <span class="badge todo">To Do</span>
           </div>
 
-          <div class="task-compact">
-            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
+          <!-- DROPDOWN BODY -->
+          <div v-if="expandedTaskId === t.id" class="task-body">
+            <div class="task-compact">
+              <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div class="task-meta">
-              <div class="meta-row">
-                <span class="meta-label">Deadline</span>
-                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Assigned</span>
-                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              <div class="task-meta">
+                <div class="meta-row">
+                  <span class="meta-label">Deadline</span>
+                  <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Assigned</span>
+                  <span class="meta-value">{{ t.assignees || "—" }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="actions actions-3">
-            <button
-              class="btn"
-              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
-              @click="handleAssignment(t.id)"
-            >
-              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
-            </button>
+            <div class="actions actions-3">
+              <button
+                class="btn"
+                :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+                @click.stop="handleAssignment(t.id)"
+              >
+                {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+              </button>
 
-            <button class="btn" @click="openEdit(t)">Edit</button>
-            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
-          </div>
+              <button class="btn" @click.stop="openEdit(t)">Edit</button>
+              <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
+            </div>
 
-          <div class="move-toggle">
-            <button class="btn btn-ghost" @click="toggleMove(t.id)">
-              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-            </button>
-          </div>
+            <div class="move-toggle">
+              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
+                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+              </button>
+            </div>
 
-          <div v-if="moveOpenId === t.id" class="move-row">
-            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.inProgress)">
-              Move to In Progress
-            </button>
+            <div v-if="moveOpenId === t.id" class="move-row">
+              <button class="btn btn-primary" @click.stop="moveTask(t.id, statusIds.inProgress)">
+                Move to In Progress
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- IN PROGRESS -->
-      <div class="column">
+      <div
+        class="column"
+        @dragover.prevent="onDragOver(statusIds.inProgress)"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop(statusIds.inProgress)"
+        :class="{ dropzone: dragOverStatusId === statusIds.inProgress }"
+      >
         <h2>In Progress</h2>
 
-        <div v-for="t in progressTasks" :key="t.id" class="task compact">
-          <div class="task-header">
-            <h3 class="task-title">{{ t.name }}</h3>
+        <div
+          v-for="t in progressTasks"
+          :key="t.id"
+          class="task compact"
+          draggable="true"
+          @dragstart="onDragStart(t)"
+          @dragend="onDragEnd"
+          :class="{ open: expandedTaskId === t.id }"
+        >
+          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+            <div class="head-left">
+              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <h3 class="task-title">{{ t.name }}</h3>
+            </div>
             <span class="badge progress">In Progress</span>
           </div>
 
-          <div class="task-compact">
-            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
+          <div v-if="expandedTaskId === t.id" class="task-body">
+            <div class="task-compact">
+              <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div class="task-meta">
-              <div class="meta-row">
-                <span class="meta-label">Deadline</span>
-                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Assigned</span>
-                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              <div class="task-meta">
+                <div class="meta-row">
+                  <span class="meta-label">Deadline</span>
+                  <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Assigned</span>
+                  <span class="meta-value">{{ t.assignees || "—" }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="actions actions-3">
-            <button
-              class="btn"
-              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
-              @click="handleAssignment(t.id)"
-            >
-              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
-            </button>
+            <div class="actions actions-3">
+              <button
+                class="btn"
+                :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+                @click.stop="handleAssignment(t.id)"
+              >
+                {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+              </button>
 
-            <button class="btn" @click="openEdit(t)">Edit</button>
-            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
-          </div>
+              <button class="btn" @click.stop="openEdit(t)">Edit</button>
+              <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
+            </div>
 
-          <div class="move-toggle">
-            <button class="btn btn-ghost" @click="toggleMove(t.id)">
-              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-            </button>
-          </div>
+            <div class="move-toggle">
+              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
+                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+              </button>
+            </div>
 
-          <div v-if="moveOpenId === t.id" class="move-row">
-            <button class="btn" @click="moveTask(t.id, statusIds.todo)">Move to To Do</button>
-            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.done)">
-              Move to Done
-            </button>
+            <div v-if="moveOpenId === t.id" class="move-row">
+              <button class="btn" @click.stop="moveTask(t.id, statusIds.todo)">Move to To Do</button>
+              <button class="btn btn-primary" @click.stop="moveTask(t.id, statusIds.done)">
+                Move to Done
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- DONE -->
-      <div class="column">
+      <div
+        class="column"
+        @dragover.prevent="onDragOver(statusIds.done)"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop(statusIds.done)"
+        :class="{ dropzone: dragOverStatusId === statusIds.done }"
+      >
         <h2>Done</h2>
 
-        <div v-for="t in doneTasks" :key="t.id" class="task compact">
-          <div class="task-header">
-            <h3 class="task-title">{{ t.name }}</h3>
+        <div
+          v-for="t in doneTasks"
+          :key="t.id"
+          class="task compact"
+          draggable="true"
+          @dragstart="onDragStart(t)"
+          @dragend="onDragEnd"
+          :class="{ open: expandedTaskId === t.id }"
+        >
+          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+            <div class="head-left">
+              <span class="caret" :class="{ open: expandedTaskId === t.id }">▸</span>
+              <h3 class="task-title">{{ t.name }}</h3>
+            </div>
             <span class="badge done">Done</span>
           </div>
 
-          <div class="task-compact">
-            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
+          <div v-if="expandedTaskId === t.id" class="task-body">
+            <div class="task-compact">
+              <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div class="task-meta">
-              <div class="meta-row">
-                <span class="meta-label">Deadline</span>
-                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
-              </div>
-              <div class="meta-row">
-                <span class="meta-label">Assigned</span>
-                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              <div class="task-meta">
+                <div class="meta-row">
+                  <span class="meta-label">Deadline</span>
+                  <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Assigned</span>
+                  <span class="meta-value">{{ t.assignees || "—" }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="actions actions-3">
-            <button
-              class="btn"
-              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
-              @click="handleAssignment(t.id)"
-            >
-              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
-            </button>
+            <div class="actions actions-3">
+              <button
+                class="btn"
+                :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+                @click.stop="handleAssignment(t.id)"
+              >
+                {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+              </button>
 
-            <button class="btn" @click="openEdit(t)">Edit</button>
-            <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
-          </div>
+              <button class="btn" @click.stop="openEdit(t)">Edit</button>
+              <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
+            </div>
 
-          <div class="move-toggle">
-            <button class="btn btn-ghost" @click="toggleMove(t.id)">
-              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-            </button>
-          </div>
+            <div class="move-toggle">
+              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
+                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+              </button>
+            </div>
 
-          <div v-if="moveOpenId === t.id" class="move-row">
-            <button class="btn" @click="moveTask(t.id, statusIds.inProgress)">
-              Move to In Progress
-            </button>
+            <div v-if="moveOpenId === t.id" class="move-row">
+              <button class="btn" @click.stop="moveTask(t.id, statusIds.inProgress)">
+                Move to In Progress
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -293,6 +357,14 @@ const showDelete = ref(false);
 const taskToDelete = ref(null);
 const moveOpenId = ref(null);
 
+/** ✅ Dropdown open state (one task at a time) */
+const expandedTaskId = ref(null);
+function toggleTask(taskId) {
+  // close move panel if switching tasks
+  if (expandedTaskId.value !== taskId) moveOpenId.value = null;
+  expandedTaskId.value = expandedTaskId.value === taskId ? null : taskId;
+}
+
 const newTask = ref({
   name: "",
   description: "",
@@ -330,6 +402,8 @@ let escDelete = null;
 function loadBoard() {
   if (!currentProjectId.value) {
     tasks.value = [];
+    expandedTaskId.value = null;
+    moveOpenId.value = null;
     return;
   }
 
@@ -340,6 +414,12 @@ function loadBoard() {
   };
 
   tasks.value = props.model.getProjectTasksForBoard();
+
+  // if expanded task no longer exists, close it
+  if (expandedTaskId.value && !tasks.value.some(t => t.id === expandedTaskId.value)) {
+    expandedTaskId.value = null;
+    moveOpenId.value = null;
+  }
 }
 
 watch(currentProjectId, () => loadBoard(), { immediate: true });
@@ -404,6 +484,30 @@ function addTask() {
 
 function toggleMove(taskId) {
   moveOpenId.value = moveOpenId.value === taskId ? null : taskId;
+}
+
+/* ✅ Drag & Drop */
+const draggedTaskId = ref(null);
+const dragOverStatusId = ref(null);
+
+function onDragStart(task) {
+  draggedTaskId.value = task.id;
+}
+function onDragEnd() {
+  draggedTaskId.value = null;
+  dragOverStatusId.value = null;
+}
+function onDragOver(statusId) {
+  dragOverStatusId.value = statusId;
+}
+function onDragLeave() {
+  dragOverStatusId.value = null;
+}
+function onDrop(targetStatusId) {
+  if (!draggedTaskId.value) return;
+  moveTask(draggedTaskId.value, targetStatusId);
+  draggedTaskId.value = null;
+  dragOverStatusId.value = null;
 }
 
 function openEdit(task) {
@@ -511,7 +615,6 @@ onBeforeUnmount(() => {
 }
 
 .page-header { margin-bottom: 14px; }
-
 .subtitle { margin: 6px 0 0 0; color: #64748b; }
 
 .card {
@@ -536,6 +639,10 @@ onBeforeUnmount(() => {
   padding: 14px;
   min-height: 520px;
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+}
+
+.column.dropzone {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 6px 18px rgba(2, 6, 23, 0.06);
 }
 
 .col-head{
@@ -614,12 +721,46 @@ input[type="datetime-local"] {
   margin-bottom: 12px;
 }
 
+/* dropdown visual */
+.task.compact.open {
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.08);
+}
+
+.task-body {
+  margin-top: 10px;
+  border-top: 1px solid #eef2f7;
+  padding-top: 10px;
+}
+
+.clickableHead {
+  cursor: pointer;
+  user-select: none;
+}
+
+.head-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.caret {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 140ms ease;
+  font-weight: 900;
+  color: #334155;
+}
+
+.caret.open {
+  transform: rotate(90deg);
+}
+
 .task-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 8px;
 }
 
 .task-title {
@@ -627,6 +768,9 @@ input[type="datetime-local"] {
   font-size: 15px;
   font-weight: 900;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ✅ FIX: add standard property 'line-clamp' to avoid VSCode warning */
@@ -637,7 +781,7 @@ input[type="datetime-local"] {
 
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2;                 /* <- makes the warning go away */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -677,7 +821,6 @@ input[type="datetime-local"] {
 .actions-3 { flex-wrap: wrap; }
 
 .move-toggle { margin-top: 6px; }
-
 .move-row {
   margin-top: 8px;
   display: flex;
