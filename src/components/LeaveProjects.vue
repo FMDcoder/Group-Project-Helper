@@ -2,6 +2,24 @@
   <div>
     <!-- Button to open popup -->
     <button class="openBtn" @click="openPopup">Leave Project</button>
+    
+     <!-- Overlay -->
+    <div v-if="isOpenConfirmation" class="overlay" style="z-index: 100"; @click="closeConfirm">
+      <!-- Popup box -->
+      <div class="popup" @click.stop>
+        <div class="header">
+          <h4>Confirmation</h4>
+          <button class="x" @click="closeConfirm" aria-label="Close">✕</button>
+        </div>
+        <div>
+          <label>Are you sure you want to leave this group?</label>
+        </div>
+        <div>
+          <button class="openBtn btn btn-danger" style="background-color:red; margin-right:10px;" @click="confirm" aria-label="Close">Yes</button>
+          <button class="openBtn btn" @click="closeConfirm" aria-label="Close">No</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Overlay -->
     <div v-if="isOpen" class="overlay" @click="closePopup">
@@ -26,7 +44,7 @@
           </p>
 
           <!-- Results -->
-          <ul v-if="searchQuery.trim() && filteredProjects.length" class="results">
+          <ul v-if="filteredProjects.length" class="results">
             <li v-for="p in filteredProjects" :key="p.id" class="resultRow">
               <div
                 class="resultItem"
@@ -68,11 +86,6 @@
             No projects found.
           </p>
 
-          <!-- Nothing typed yet -->
-          <p v-else class="hint">
-            Please type something to search for a project.
-          </p>
-
           <!-- Optional footer actions -->
           <div class="footer">
             <button class="closeBtn" @click="closePopup">Close</button>
@@ -102,6 +115,7 @@ export default {
       isOpen: false,
       searchQuery: "",
       selectedProjectId: null,
+      isOpenConfirmation: false
     };
   },
 
@@ -112,7 +126,11 @@ export default {
 
     filteredProjects() {
       const query = this.searchQuery.trim().toLowerCase();
-      if (!query) return [];
+      if (!query || query.length == 0) {
+        return this.projects.filter((project) => 
+           this.model.isInProject(project?.id)
+          );
+      }
 
       return this.projects.filter((project) =>
         String(project?.name ?? "").toLowerCase().includes(query) && this.model.isInProject(project?.id)
@@ -153,9 +171,15 @@ export default {
       this.selectedProjectId = project.id;
     },
 
-    leaveSelected() {
-      if (!this.selectedProjectId) return;
-      
+    openConfirm() {
+      this.isOpenConfirmation = true
+    },
+
+    closeConfirm() {
+      this.isOpenConfirmation = false
+    },
+
+    confirm() {
       this.setCurrentProject(null);
       this.model.leaveUserProject(this.selectedProjectId)
 
@@ -165,6 +189,12 @@ export default {
       }
 
       this.closePopup();
+      this.closeConfirm();
+    },
+
+    leaveSelected() {
+      if (!this.selectedProjectId) return;
+      this.openConfirm()
     },
 
     highlightParts(text, query) {
