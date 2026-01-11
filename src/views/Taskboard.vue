@@ -17,32 +17,47 @@
     <div v-else class="taskboard">
       <!-- TO DO -->
       <div class="column">
-        <h2>To Do</h2>
+        <div class="col-head">
+          <h2>To Do</h2>
 
-        <div class="card-lite">
+          <!-- Toggle Add Task -->
+          <button class="btn btn-primary btn-small" @click="toggleAdd">
+            {{ showAdd ? "Close" : "+ Add task" }}
+          </button>
+        </div>
+
+        <!-- Add task (collapsible) -->
+        <div v-if="showAdd" class="card-lite">
           <h3 class="mini-title">Add task</h3>
 
           <label class="field">
             <span class="field-label">Title</span>
-            <input v-model.trim="newTask.name" type="text" placeholder="e.g., Create prototype sketches" />
+            <input
+              v-model.trim="newTask.name"
+              type="text"
+              placeholder="e.g., Create prototype sketches"
+            />
           </label>
 
           <label class="field">
             <span class="field-label">Description</span>
             <input v-model.trim="newTask.description" type="text" placeholder="Short description" />
           </label>
-          
-          <label class="field">
-            <span class="field-label">Date</span>
-            <input v-model="newTask.date" type="date" />
-          </label>
 
-          <label class="field">
-            <span class="field-label">Time</span>
-            <input v-model="newTask.time" type="time" />
-          </label>
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">Date</span>
+              <input v-model="newTask.date" type="date" />
+            </label>
+
+            <label class="field">
+              <span class="field-label">Time</span>
+              <input v-model="newTask.time" type="time" />
+            </label>
+          </div>
 
           <div class="actions">
+            <button class="btn" @click="closeAdd">Cancel</button>
             <button class="btn btn-primary" :disabled="isAddDisabled" @click="addTask">
               Add to To Do
             </button>
@@ -51,37 +66,50 @@
           <p v-if="isAddDisabled" class="hint">Fill in title + description to enable Add.</p>
         </div>
 
-        <div v-for="(t, index) in todoTasks" :key="t.id" class="task">
+        <div v-for="t in todoTasks" :key="t.id" class="task compact">
           <div class="task-header">
             <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge todo">To Do</span>
           </div>
 
-          <div class="task-fields">
-            <div>
-              <label>Description</label>
-              <input type="text" :value="t.description || ''" readonly />
-            </div>
+          <div class="task-compact">
+            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div>
-              <label>Deadline</label>
-              <input type="text" :value="formatDeadline(t.deadline)" readonly />
-            </div>
-
-            <div>
-              <label>Assigned to</label>
-              <input type="text" :value="t.assignees || '—'" readonly />
+            <div class="task-meta">
+              <div class="meta-row">
+                <span class="meta-label">Deadline</span>
+                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Assigned</span>
+                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              </div>
             </div>
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button
+              class="btn"
+              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+              @click="handleAssignment(t.id)"
+            >
+              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+            </button>
+
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
 
-          <div class="move-row">
-            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.inProgress)">Move to In Progress</button>
+          <div class="move-toggle">
+            <button class="btn btn-ghost" @click="toggleMove(t.id)">
+              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+            </button>
+          </div>
+
+          <div v-if="moveOpenId === t.id" class="move-row">
+            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.inProgress)">
+              Move to In Progress
+            </button>
           </div>
         </div>
       </div>
@@ -90,38 +118,51 @@
       <div class="column">
         <h2>In Progress</h2>
 
-        <div v-for="t in progressTasks" :key="t.id" class="task">
+        <div v-for="t in progressTasks" :key="t.id" class="task compact">
           <div class="task-header">
             <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge progress">In Progress</span>
           </div>
 
-          <div class="task-fields">
-            <div>
-              <label>Description</label>
-              <input type="text" :value="t.description || ''" readonly />
-            </div>
+          <div class="task-compact">
+            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div>
-              <label>Deadline</label>
-              <input type="text" :value="formatDeadline(t.deadline)" readonly />
-            </div>
-
-            <div>
-              <label>Assigned to</label>
-              <input type="text" :value="t.assignees || '—'" readonly />
+            <div class="task-meta">
+              <div class="meta-row">
+                <span class="meta-label">Deadline</span>
+                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Assigned</span>
+                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              </div>
             </div>
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button
+              class="btn"
+              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+              @click="handleAssignment(t.id)"
+            >
+              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+            </button>
+
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
 
-          <div class="move-row">
+          <div class="move-toggle">
+            <button class="btn btn-ghost" @click="toggleMove(t.id)">
+              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+            </button>
+          </div>
+
+          <div v-if="moveOpenId === t.id" class="move-row">
             <button class="btn" @click="moveTask(t.id, statusIds.todo)">Move to To Do</button>
-            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.done)">Move to Done</button>
+            <button class="btn btn-primary" @click="moveTask(t.id, statusIds.done)">
+              Move to Done
+            </button>
           </div>
         </div>
       </div>
@@ -130,37 +171,50 @@
       <div class="column">
         <h2>Done</h2>
 
-        <div v-for="t in doneTasks" :key="t.id" class="task">
+        <div v-for="t in doneTasks" :key="t.id" class="task compact">
           <div class="task-header">
             <h3 class="task-title">{{ t.name }}</h3>
             <span class="badge done">Done</span>
           </div>
 
-          <div class="task-fields">
-            <div>
-              <label>Description</label>
-              <input type="text" :value="t.description || ''" readonly />
-            </div>
+          <div class="task-compact">
+            <p class="task-desc" v-if="t.description">{{ t.description }}</p>
 
-            <div>
-              <label>Deadline</label>
-              <input type="text" :value="formatDeadline(t.deadline)" readonly />
-            </div>
-
-            <div>
-              <label>Assigned to</label>
-              <input type="text" :value="t.assignees || '—'" readonly />
+            <div class="task-meta">
+              <div class="meta-row">
+                <span class="meta-label">Deadline</span>
+                <span class="meta-value">{{ formatDeadline(t.deadline) }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Assigned</span>
+                <span class="meta-value">{{ t.assignees || "—" }}</span>
+              </div>
             </div>
           </div>
 
           <div class="actions actions-3">
-            <button class="btn" :class="{assigned: props.model.isUserPartOfTask(t.id)}" @click="handleAssignment(t.id)">{{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}</button>
+            <button
+              class="btn"
+              :class="{ assigned: props.model.isUserPartOfTask(t.id) }"
+              @click="handleAssignment(t.id)"
+            >
+              {{ !props.model.isUserPartOfTask(t.id) ? "Assign to me" : "Unassign me" }}
+            </button>
+
             <button class="btn" @click="openEdit(t)">Edit</button>
             <button class="btn btn-ghost" @click="openDelete(t)">Delete</button>
           </div>
 
-          <div class="move-row">
-            <button class="btn" @click="moveTask(t.id, statusIds.inProgress)">Move to In Progress</button>
+          <div class="move-toggle">
+            <button class="btn btn-ghost" @click="toggleMove(t.id)">
+              {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
+            </button>
+          </div>
+
+          <div v-if="moveOpenId === t.id" class="move-row">
+            <button class="btn" @click="moveTask(t.id, statusIds.inProgress)">
+              Move to In Progress
+            </button>
           </div>
         </div>
       </div>
@@ -219,31 +273,31 @@
         </div>
       </div>
     </div>
-
   </section>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 import UserProjects from "@/components/UserProjects.vue";
-//import { f } from "vue-router";
-import { task } from "@/dat";
-import { reactive } from 'vue'
 
 const props = defineProps(["model"]);
 
 const tasks = ref([]);
 const statusIds = ref({ todo: null, inProgress: null, done: null });
 
+const showAdd = ref(false);
+
 const showEdit = ref(false);
 const showDelete = ref(false);
 
 const taskToDelete = ref(null);
+const moveOpenId = ref(null);
 
 const newTask = ref({
   name: "",
   description: "",
-  deadline: "",
+  date: "",
+  time: "",
 });
 
 const editForm = ref({
@@ -258,9 +312,9 @@ const editTitleInput = ref(null);
 const currentProjectId = computed(() => props.model.getCurrentProject()?.id ?? null);
 const currentProjectName = computed(() => props.model.getCurrentProject()?.name ?? null);
 
-const todoTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.todo));
-const progressTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.inProgress));
-const doneTasks = computed(() => tasks.value.filter(t => t.statusId === statusIds.value.done));
+const todoTasks = computed(() => tasks.value.filter((t) => t.statusId === statusIds.value.todo));
+const progressTasks = computed(() => tasks.value.filter((t) => t.statusId === statusIds.value.inProgress));
+const doneTasks = computed(() => tasks.value.filter((t) => t.statusId === statusIds.value.done));
 
 const isAddDisabled = computed(() => {
   return newTask.value.name.trim().length === 0 || newTask.value.description.trim().length === 0;
@@ -273,9 +327,6 @@ const isEditDisabled = computed(() => {
 let escEdit = null;
 let escDelete = null;
 
-const getAssignedTask = (id) => {
-  return assignedTaskslist.find(v => v.id == id)
-}
 function loadBoard() {
   if (!currentProjectId.value) {
     tasks.value = [];
@@ -293,6 +344,15 @@ function loadBoard() {
 
 watch(currentProjectId, () => loadBoard(), { immediate: true });
 
+function toggleAdd() {
+  showAdd.value = !showAdd.value;
+}
+
+function closeAdd() {
+  showAdd.value = false;
+  newTask.value = { name: "", description: "", date: "", time: "" };
+}
+
 function toPretty(dt) {
   if (!dt) return "";
   const d = dt instanceof Date ? dt : new Date(dt);
@@ -305,7 +365,11 @@ function toPretty(dt) {
     year: "numeric",
   });
 
-  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const time = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
   return `${date}, ${time}`;
 }
@@ -317,21 +381,29 @@ function formatDeadline(deadline) {
 function addTask() {
   if (isAddDisabled.value) return;
 
-  const [year, month, day] = newTask.value.date.split('-').map(Number);
-  const [hours, minutes] = newTask.value.time.split(':').map(Number);
+  let deadline = null;
+  const hasDate = String(newTask.value.date || "").trim().length > 0;
+  const hasTime = String(newTask.value.time || "").trim().length > 0;
 
-  // JS Date months are 0-indexed
-  newTask.value.deadline = new Date(year, month - 1, day, hours, minutes); 
+  if (hasDate && hasTime) {
+    const [year, month, day] = newTask.value.date.split("-").map(Number);
+    const [hours, minutes] = newTask.value.time.split(":").map(Number);
+    deadline = new Date(year, month - 1, day, hours, minutes);
+  }
 
   props.model.createTask({
     name: newTask.value.name,
     description: newTask.value.description,
-    deadline: newTask.value.deadline || null,
+    deadline,
     statusId: statusIds.value.todo,
   });
 
-  newTask.value = { name: "", description: "", deadline: "" };
+  closeAdd();
   loadBoard();
+}
+
+function toggleMove(taskId) {
+  moveOpenId.value = moveOpenId.value === taskId ? null : taskId;
 }
 
 function openEdit(task) {
@@ -403,30 +475,18 @@ function confirmDelete() {
   loadBoard();
 }
 
-function handleAssignment(taskid) {
-  if(!props.model.isUserPartOfTask(taskid)) {
-    assignToMe(taskid)
-    updateAssignedTasklist(taskid, true)
+function handleAssignment(taskId) {
+  if (!props.model.isUserPartOfTask(taskId)) {
+    props.model.assignTaskToCurrentUser(taskId);
+  } else {
+    props.model.unassignTaskFromCurrentUser(taskId);
   }
-  else {
-    unAssignUserFromTask(taskid)
-    updateAssignedTasklist(taskid, false)
-  }
-  props.model.notifyObservers()
-}
-
-function unAssignUserFromTask(taskid) {
-    props.model.unassignTaskFromCurrentUser(taskid)
-    loadBoard()
-}
-
-function assignToMe(taskId) {
-  props.model.assignTaskToCurrentUser(taskId);
   loadBoard();
 }
 
 function moveTask(taskId, newStatusId) {
   props.model.updateTaskStatus(taskId, newStatusId);
+  moveOpenId.value = null;
   loadBoard();
 }
 
@@ -478,10 +538,18 @@ onBeforeUnmount(() => {
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
 }
 
-.column h2 {
-  margin: 0 0 12px 0;
-  padding-bottom: 10px;
+.col-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+  padding-bottom:10px;
   border-bottom: 1px solid #eef2f7;
+}
+
+.column h2 {
+  margin: 0;
   font-size: 18px;
 }
 
@@ -500,42 +568,16 @@ onBeforeUnmount(() => {
   color: #0f172a;
 }
 
-.task {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-  background: #ffffff;
-  margin-bottom: 14px;
-}
-
-.task-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.task-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 900;
-  color: #0f172a;
-}
-
-.task-fields > div { margin-bottom: 10px; }
-
-label {
-  display: block;
-  font-size: 12px;
-  color: #4b5563;
-  margin-bottom: 4px;
-}
-
 .field {
   display: grid;
   gap: 6px;
   margin-bottom: 10px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .field-label {
@@ -557,31 +599,102 @@ input[type="datetime-local"] {
   height: 44px;
 }
 
-input[readonly] { background: #f1f5f9; }
+.hint {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Compact tasks */
+.task.compact {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  margin-bottom: 12px;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.task-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+/* ✅ FIX: add standard property 'line-clamp' to avoid VSCode warning */
+.task-desc {
+  margin: 0 0 8px 0;
+  color: #334155;
+  font-size: 13px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;                 /* <- makes the warning go away */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-meta {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.meta-value {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 800;
+  text-align: right;
+}
 
 .actions {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .actions-3 { flex-wrap: wrap; }
 
+.move-toggle { margin-top: 6px; }
+
 .move-row {
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
+/* Buttons */
 .btn {
   border: 1px solid #e2e8f0;
   background: #ffffff;
   color: #0f172a;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 800;
+  font-size: 13px;
   transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
@@ -596,6 +709,11 @@ input[readonly] { background: #f1f5f9; }
   opacity: 0.55;
   box-shadow: none;
   transform: none;
+}
+
+.btn-small{
+  padding: 8px 12px;
+  font-size: 13px;
 }
 
 .btn-primary {
@@ -643,12 +761,6 @@ input[readonly] { background: #f1f5f9; }
 .badge.todo { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
 .badge.progress { background: rgba(245, 158, 11, 0.16); color: #b45309; }
 .badge.done { background: rgba(34, 197, 94, 0.16); color: #15803d; }
-
-.hint {
-  margin: 8px 0 0 0;
-  font-size: 13px;
-  color: #64748b;
-}
 
 /* Modal */
 .modal-backdrop {
@@ -701,5 +813,6 @@ input[readonly] { background: #f1f5f9; }
 
 @media (max-width: 1000px) {
   .taskboard { flex-direction: column; }
+  .field-row { grid-template-columns: 1fr; }
 }
 </style>
