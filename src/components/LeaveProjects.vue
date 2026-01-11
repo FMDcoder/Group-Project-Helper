@@ -14,9 +14,9 @@
         <div>
           <label>Are you sure you want to leave this group?</label>
         </div>
-        <div>
-          <button class="openBtn btn btn-danger" style="background-color:red; margin-right:10px;" @click="confirm" aria-label="Close">Yes</button>
-          <button class="openBtn btn" @click="closeConfirm" aria-label="Close">No</button>
+        <div class="dialog-actions">
+          <button class="dialog-btn" @click="closeConfirm" aria-label="Close">No</button>
+          <button class="dialog-btn dialog-danger" @click="confirm" aria-label="Close">Yes</button>
         </div>
       </div>
     </div>
@@ -87,11 +87,11 @@
           </p>
 
           <!-- Optional footer actions -->
-          <div class="footer">
-            <button class="closeBtn" @click="closePopup">Close</button>
+          <div class="footer dialog-actions">
+            <button class="dialog-btn" @click="closePopup">Close</button>
 
             <button
-              class="joinFooterBtn"
+              class="dialog-btn dialog-primary"
               :disabled="!selectedProject"
               @click="leaveSelected"
               title="Select a project first"
@@ -253,6 +253,53 @@ export default {
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
 }
 
+.dialog-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dialog-btn {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.dialog-btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+}
+
+.dialog-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.dialog-primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.dialog-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+.dialog-danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
 /* Header */
 .header {
   display: flex;
@@ -393,29 +440,9 @@ button:hover {
 /* Footer */
 .footer {
   margin-top: 14px;
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
 }
 
-.closeBtn,
-.joinFooterBtn {
-  background-color: #2563eb;
-  color: white;
-  font-weight: 700;
-  font-size: 1rem;
-  padding: 0.55rem 1rem;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 120ms ease, transform 120ms ease;
-}
-
-.joinFooterBtn {
-  border-color: #dbeafe;
-}
-
-.joinFooterBtn:disabled {
+.dialog-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

@@ -24,11 +24,18 @@
         :class="{ dropzone: dragOverStatusId === statusIds.todo }"
       >
         <div class="col-head">
-          <h2>To Do</h2>
+          <h2>To Do ({{ todoTasks.length }})</h2>
 
           <button class="btn btn-primary btn-small" @click="toggleAdd">
             {{ showAdd ? "Close" : "+ Add task" }}
           </button>
+        </div>
+
+        <p v-if="showDragHint" class="drag-hint">Drag to move</p>
+
+        <div v-if="!showAdd && todoTasks.length === 0" class="empty-state">
+          <span class="empty-title">No tasks yet</span>
+          <button class="empty-link" type="button" @click="toggleAdd">Add a task</button>
         </div>
 
         <div v-if="showAdd" class="card-lite">
@@ -79,7 +86,15 @@
           @dragend="onDragEnd"
           :class="{ open: isTaskOpen(t.id) }"
         >
-          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+          <div
+            class="task-header clickableHead"
+            role="button"
+            tabindex="0"
+            :aria-expanded="isTaskOpen(t.id)"
+            :data-task-id="String(t.id)"
+            @click="toggleTask(t.id)"
+            @keydown="handleTaskKey($event, t.id)"
+          >
             <div class="head-left">
               <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
@@ -116,13 +131,7 @@
               <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
             </div>
 
-            <div class="move-toggle">
-              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
-                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-              </button>
-            </div>
-
-            <div v-if="moveOpenId === t.id" class="move-row">
+            <div class="move-row">
               <button class="btn btn-primary" @click.stop="moveTask(t.id, statusIds.inProgress)">
                 Move to In Progress
               </button>
@@ -139,7 +148,12 @@
         @drop.prevent="onDrop(statusIds.inProgress)"
         :class="{ dropzone: dragOverStatusId === statusIds.inProgress }"
       >
-        <h2>In Progress</h2>
+        <h2>In Progress ({{ progressTasks.length }})</h2>
+        <p v-if="showDragHint" class="drag-hint">Drag to move</p>
+        <div v-if="progressTasks.length === 0" class="empty-state">
+          <span class="empty-title">Nothing in progress</span>
+          <span class="empty-text">Drag a task here</span>
+        </div>
 
         <div
           v-for="t in progressTasks"
@@ -150,7 +164,15 @@
           @dragend="onDragEnd"
           :class="{ open: isTaskOpen(t.id) }"
         >
-          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+          <div
+            class="task-header clickableHead"
+            role="button"
+            tabindex="0"
+            :aria-expanded="isTaskOpen(t.id)"
+            :data-task-id="String(t.id)"
+            @click="toggleTask(t.id)"
+            @keydown="handleTaskKey($event, t.id)"
+          >
             <div class="head-left">
               <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
@@ -187,13 +209,7 @@
               <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
             </div>
 
-            <div class="move-toggle">
-              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
-                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-              </button>
-            </div>
-
-            <div v-if="moveOpenId === t.id" class="move-row">
+            <div class="move-row">
               <button class="btn" @click.stop="moveTask(t.id, statusIds.todo)">Move to To Do</button>
               <button class="btn btn-primary" @click.stop="moveTask(t.id, statusIds.done)">
                 Move to Done
@@ -211,7 +227,12 @@
         @drop.prevent="onDrop(statusIds.done)"
         :class="{ dropzone: dragOverStatusId === statusIds.done }"
       >
-        <h2>Done</h2>
+        <h2>Done ({{ doneTasks.length }})</h2>
+        <p v-if="showDragHint" class="drag-hint">Drag to move</p>
+        <div v-if="doneTasks.length === 0" class="empty-state">
+          <span class="empty-title">No completed tasks</span>
+          <span class="empty-text">Drag a task here</span>
+        </div>
 
         <div
           v-for="t in doneTasks"
@@ -222,7 +243,15 @@
           @dragend="onDragEnd"
           :class="{ open: isTaskOpen(t.id) }"
         >
-          <div class="task-header clickableHead" @click="toggleTask(t.id)">
+          <div
+            class="task-header clickableHead"
+            role="button"
+            tabindex="0"
+            :aria-expanded="isTaskOpen(t.id)"
+            :data-task-id="String(t.id)"
+            @click="toggleTask(t.id)"
+            @keydown="handleTaskKey($event, t.id)"
+          >
             <div class="head-left">
               <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
               <h3 class="task-title">{{ t.name }}</h3>
@@ -259,13 +288,7 @@
               <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
             </div>
 
-            <div class="move-toggle">
-              <button class="btn btn-ghost" @click.stop="toggleMove(t.id)">
-                {{ moveOpenId === t.id ? "Hide move" : "Move…" }}
-              </button>
-            </div>
-
-            <div v-if="moveOpenId === t.id" class="move-row">
+            <div class="move-row">
               <button class="btn" @click.stop="moveTask(t.id, statusIds.inProgress)">
                 Move to In Progress
               </button>
@@ -328,11 +351,15 @@
         </div>
       </div>
     </div>
+
+    <div class="toast" :class="{ show: toast.show }" role="status" aria-live="polite">
+      {{ toast.message }}
+    </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import UserProjects from "@/components/UserProjects.vue";
 
 const props = defineProps(["model"]);
@@ -345,8 +372,13 @@ const showAdd = ref(false);
 const showEdit = ref(false);
 const showDelete = ref(false);
 
+const dragHintKey = "taskboard:drag-hint:seen";
+const showDragHint = ref(true);
+
 const taskToDelete = ref(null);
-const moveOpenId = ref(null);
+
+const toast = ref({ show: false, message: "" });
+let toastTimer = null;
 
 const newTask = ref({
   name: "",
@@ -407,7 +439,6 @@ function toggleTask(id) {
 
   if (next.has(key)) {
     next.delete(key);
-    if (normId(moveOpenId.value) === key) moveOpenId.value = null;
   } else {
     next.add(key);
   }
@@ -430,12 +461,12 @@ const isEditDisabled = computed(() => {
 
 let escEdit = null;
 let escDelete = null;
+let globalKeyHandler = null;
 
 function loadBoard() {
   if (!currentProjectId.value) {
     tasks.value = [];
     expandedTaskIds.value = new Set();
-    moveOpenId.value = null;
     try { sessionStorage.removeItem(openStateKey.value); } catch (e) {}
     return;
   }
@@ -460,12 +491,25 @@ function loadBoard() {
   expandedTaskIds.value = nextOpen;
   saveOpenState();
 
-  if (moveOpenId.value && !existing.has(normId(moveOpenId.value))) {
-    moveOpenId.value = null;
-  }
 }
 
 watch(currentProjectId, () => loadBoard(), { immediate: true });
+
+onMounted(() => {
+  globalKeyHandler = (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (isEditableTarget(e.target)) return;
+    if (showEdit.value || showDelete.value) return;
+
+    const active = document.activeElement;
+    if (active?.classList?.contains("clickableHead")) return;
+
+    if (focusFirstTaskHeader()) {
+      e.preventDefault();
+    }
+  };
+  window.addEventListener("keydown", globalKeyHandler);
+});
 
 function toggleAdd() {
   showAdd.value = !showAdd.value;
@@ -474,6 +518,40 @@ function toggleAdd() {
 function closeAdd() {
   showAdd.value = false;
   newTask.value = { name: "", description: "", date: "", time: "" };
+}
+
+function isEditableTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return (
+    el.isContentEditable ||
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    tag === "BUTTON"
+  );
+}
+
+function getTaskHeaders() {
+  const board = document.querySelector(".taskboard");
+  if (!board) return [];
+  return Array.from(board.querySelectorAll(".task-header.clickableHead"));
+}
+
+function focusFirstTaskHeader() {
+  const headers = getTaskHeaders();
+  if (headers.length === 0) return false;
+  headers[0]?.focus?.();
+  return true;
+}
+
+function focusTaskHeader(taskId) {
+  nextTick(() => {
+    const target = document.querySelector(
+      `.task-header.clickableHead[data-task-id="${normId(taskId)}"]`
+    );
+    target?.focus?.();
+  });
 }
 
 function toPretty(dt) {
@@ -525,9 +603,6 @@ function addTask() {
   loadBoard();
 }
 
-function toggleMove(taskId) {
-  moveOpenId.value = normId(moveOpenId.value) === normId(taskId) ? null : taskId;
-}
 
 /* ✅ Drag & Drop */
 const draggedTaskId = ref(null);
@@ -535,6 +610,7 @@ const dragOverStatusId = ref(null);
 
 function onDragStart(task) {
   draggedTaskId.value = task.id;
+  markDragHintSeen();
 }
 function onDragEnd() {
   draggedTaskId.value = null;
@@ -562,9 +638,10 @@ function updateTaskStatusLocally(taskId, newStatusId) {
 
 function moveTask(taskId, newStatusId) {
   props.model.updateTaskStatus(taskId, newStatusId);
-  moveOpenId.value = null;
 
   updateTaskStatusLocally(taskId, newStatusId);
+
+  showToast(`Moved to ${statusLabel(newStatusId)}`);
 
   // Persist open state so even if model triggers rerender, it restores
   saveOpenState();
@@ -636,21 +713,121 @@ function confirmDelete() {
   if (!taskToDelete.value) return;
   props.model.deleteTask(taskToDelete.value.id);
   closeDelete();
+  showToast("Task deleted");
   loadBoard();
 }
 
 function handleAssignment(taskId) {
   if (!props.model.isUserPartOfTask(taskId)) {
     props.model.assignTaskToCurrentUser(taskId);
+    showToast("Assigned to you");
   } else {
     props.model.unassignTaskFromCurrentUser(taskId);
+    showToast("Unassigned from task");
   }
   loadBoard();
+}
+
+function handleTaskKey(e, taskId) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    toggleTask(taskId);
+    return;
+  }
+
+  if (e.key === "Escape") {
+    if (isTaskOpen(taskId)) {
+      e.preventDefault();
+      toggleTask(taskId);
+    }
+    return;
+  }
+
+  if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+  e.preventDefault();
+
+  const current = e.currentTarget;
+  const column = current?.closest?.(".column");
+  if (!column) return;
+
+  const headers = Array.from(column.querySelectorAll(".task-header.clickableHead"));
+  const idx = headers.indexOf(current);
+  if (idx === -1) return;
+
+  if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+    const task = tasks.value.find((t) => normId(t.id) === normId(taskId));
+    if (!task) return;
+
+    const order = [statusIds.value.todo, statusIds.value.inProgress, statusIds.value.done];
+    const orderKeys = order.map(normId);
+    const currentIdx = orderKeys.indexOf(normId(task.statusId));
+    if (currentIdx === -1) return;
+
+    const nextIdx = e.key === "ArrowRight" ? currentIdx + 1 : currentIdx - 1;
+    if (nextIdx < 0 || nextIdx >= order.length) return;
+
+    moveTask(taskId, order[nextIdx]);
+    focusTaskHeader(taskId);
+    return;
+  }
+
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const nextIdx = e.key === "ArrowDown" ? idx + 1 : idx - 1;
+    headers[nextIdx]?.focus?.();
+    return;
+  }
+
+  const board = column.closest(".taskboard");
+  const columns = Array.from((board || column.parentElement).querySelectorAll(".column"));
+  const colIdx = columns.indexOf(column);
+  if (colIdx === -1) return;
+
+  const targetCol = e.key === "ArrowRight" ? columns[colIdx + 1] : columns[colIdx - 1];
+  if (!targetCol) return;
+
+  const targetHeaders = Array.from(targetCol.querySelectorAll(".task-header.clickableHead"));
+  if (targetHeaders.length === 0) return;
+
+  const targetIdx = Math.min(idx, targetHeaders.length - 1);
+  targetHeaders[targetIdx]?.focus?.();
+}
+
+function markDragHintSeen() {
+  if (!showDragHint.value) return;
+  showDragHint.value = false;
+  try {
+    sessionStorage.setItem(dragHintKey, "1");
+  } catch (e) {}
+}
+
+function statusLabel(statusId) {
+  const key = normId(statusId);
+  if (key === normId(statusIds.value.todo)) return "To Do";
+  if (key === normId(statusIds.value.inProgress)) return "In Progress";
+  if (key === normId(statusIds.value.done)) return "Done";
+  return "Updated";
+}
+
+function showToast(message) {
+  toast.value = { show: true, message };
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.value = { show: false, message: "" };
+    toastTimer = null;
+  }, 1800);
+}
+
+try {
+  showDragHint.value = !sessionStorage.getItem(dragHintKey);
+} catch (e) {
+  showDragHint.value = true;
 }
 
 onBeforeUnmount(() => {
   if (escEdit) window.removeEventListener("keydown", escEdit);
   if (escDelete) window.removeEventListener("keydown", escDelete);
+  if (toastTimer) clearTimeout(toastTimer);
+  if (globalKeyHandler) window.removeEventListener("keydown", globalKeyHandler);
 });
 </script>
 
@@ -710,8 +887,50 @@ onBeforeUnmount(() => {
 }
 
 .column h2 {
-  margin: 0;
+  margin: 0 0 12px 0;
   font-size: 18px;
+}
+
+.drag-hint {
+  margin: -4px 0 12px 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.empty-state {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.empty-title {
+  font-weight: 800;
+  color: #334155;
+}
+
+.empty-text {
+  color: #64748b;
+}
+
+.empty-link {
+  justify-self: start;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.empty-link:hover {
+  text-decoration: underline;
 }
 
 .card-lite {
@@ -773,6 +992,17 @@ input[type="datetime-local"] {
   padding: 10px 12px;
   background: #ffffff;
   margin-bottom: 12px;
+  cursor: grab;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.task.compact:hover {
+  border-color: #cbd5f5;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.08);
+}
+
+.task.compact:active {
+  cursor: grabbing;
 }
 
 /* dropdown visual */
@@ -789,6 +1019,12 @@ input[type="datetime-local"] {
 .clickableHead {
   cursor: pointer;
   user-select: none;
+}
+
+.clickableHead:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .head-left {
@@ -873,7 +1109,6 @@ input[type="datetime-local"] {
 
 .actions-3 { flex-wrap: wrap; }
 
-.move-toggle { margin-top: 6px; }
 .move-row {
   margin-top: 8px;
   display: flex;
@@ -1005,6 +1240,30 @@ input[type="datetime-local"] {
   justify-content: flex-end;
   gap: 10px;
   padding: 0 16px 16px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.3);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+  z-index: 10000;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @media (max-width: 1000px) {
