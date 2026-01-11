@@ -26,13 +26,11 @@
         <div class="col-head">
           <h2>To Do</h2>
 
-          <!-- Toggle Add Task -->
           <button class="btn btn-primary btn-small" @click="toggleAdd">
             {{ showAdd ? "Close" : "+ Add task" }}
           </button>
         </div>
 
-        <!-- Add task (collapsible) -->
         <div v-if="showAdd" class="card-lite">
           <h3 class="mini-title">Add task</h3>
 
@@ -72,17 +70,15 @@
           <p v-if="isAddDisabled" class="hint">Fill in title + description to enable Add.</p>
         </div>
 
-        <!-- Tasks -->
         <div
           v-for="t in todoTasks"
-          :key="t.id"
+          :key="String(t.id)"
           class="task compact"
           draggable="true"
           @dragstart="onDragStart(t)"
           @dragend="onDragEnd"
           :class="{ open: isTaskOpen(t.id) }"
         >
-          <!-- DROPDOWN HEADER -->
           <div class="task-header clickableHead" @click="toggleTask(t.id)">
             <div class="head-left">
               <span class="caret" :class="{ open: isTaskOpen(t.id) }">▸</span>
@@ -91,7 +87,6 @@
             <span class="badge todo">To Do</span>
           </div>
 
-          <!-- DROPDOWN BODY -->
           <div v-if="isTaskOpen(t.id)" class="task-body">
             <div class="task-compact">
               <p class="task-desc" v-if="t.description">{{ t.description }}</p>
@@ -148,7 +143,7 @@
 
         <div
           v-for="t in progressTasks"
-          :key="t.id"
+          :key="String(t.id)"
           class="task compact"
           draggable="true"
           @dragstart="onDragStart(t)"
@@ -220,7 +215,7 @@
 
         <div
           v-for="t in doneTasks"
-          :key="t.id"
+          :key="String(t.id)"
           class="task compact"
           draggable="true"
           @dragstart="onDragStart(t)"
@@ -353,24 +348,6 @@ const showDelete = ref(false);
 const taskToDelete = ref(null);
 const moveOpenId = ref(null);
 
-/* ✅ MULTI-OPEN DROPDOWN STATE */
-const expandedTaskIds = ref(new Set());
-
-function isTaskOpen(id) {
-  return expandedTaskIds.value.has(id);
-}
-
-function toggleTask(id) {
-  const next = new Set(expandedTaskIds.value);
-  if (next.has(id)) {
-    next.delete(id);
-    if (moveOpenId.value === id) moveOpenId.value = null; // close move panel if closing task
-  } else {
-    next.add(id);
-  }
-  expandedTaskIds.value = next;
-}
-
 const newTask = ref({
   name: "",
   description: "",
@@ -389,6 +366,55 @@ const editTitleInput = ref(null);
 
 const currentProjectId = computed(() => props.model.getCurrentProject()?.id ?? null);
 const currentProjectName = computed(() => props.model.getCurrentProject()?.name ?? null);
+
+/* ✅ Normalize ids so "1" and 1 behave the same */
+const normId = (id) => String(id);
+
+/* ✅ sessionStorage key per project */
+const openStateKey = computed(() =>
+  currentProjectId.value ? `taskboard:open:${currentProjectId.value}` : "taskboard:open:none"
+);
+
+function saveOpenState() {
+  try {
+    const arr = Array.from(expandedTaskIds.value);
+    sessionStorage.setItem(openStateKey.value, JSON.stringify(arr));
+  } catch (e) {}
+}
+
+function restoreOpenState() {
+  try {
+    const raw = sessionStorage.getItem(openStateKey.value);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return new Set();
+    return new Set(arr.map(normId));
+  } catch (e) {
+    return new Set();
+  }
+}
+
+/* ✅ MULTI-OPEN DROPDOWN STATE (PERSISTED) */
+const expandedTaskIds = ref(restoreOpenState());
+
+function isTaskOpen(id) {
+  return expandedTaskIds.value.has(normId(id));
+}
+
+function toggleTask(id) {
+  const key = normId(id);
+  const next = new Set(expandedTaskIds.value);
+
+  if (next.has(key)) {
+    next.delete(key);
+    if (normId(moveOpenId.value) === key) moveOpenId.value = null;
+  } else {
+    next.add(key);
+  }
+
+  expandedTaskIds.value = next;
+  saveOpenState();
+}
 
 const todoTasks = computed(() => tasks.value.filter((t) => t.statusId === statusIds.value.todo));
 const progressTasks = computed(() => tasks.value.filter((t) => t.statusId === statusIds.value.inProgress));
@@ -410,6 +436,7 @@ function loadBoard() {
     tasks.value = [];
     expandedTaskIds.value = new Set();
     moveOpenId.value = null;
+    try { sessionStorage.removeItem(openStateKey.value); } catch (e) {}
     return;
   }
 
@@ -421,15 +448,19 @@ function loadBoard() {
 
   tasks.value = props.model.getProjectTasksForBoard();
 
-  // prune open tasks that no longer exist
-  const existing = new Set(tasks.value.map(t => t.id));
+  // Restore open state (covers rerenders/remounts)
+  expandedTaskIds.value = restoreOpenState();
+
+  // Prune open tasks that no longer exist
+  const existing = new Set(tasks.value.map((t) => normId(t.id)));
   const nextOpen = new Set();
-  expandedTaskIds.value.forEach(id => {
+  expandedTaskIds.value.forEach((id) => {
     if (existing.has(id)) nextOpen.add(id);
   });
   expandedTaskIds.value = nextOpen;
+  saveOpenState();
 
-  if (moveOpenId.value && !existing.has(moveOpenId.value)) {
+  if (moveOpenId.value && !existing.has(normId(moveOpenId.value))) {
     moveOpenId.value = null;
   }
 }
@@ -495,7 +526,7 @@ function addTask() {
 }
 
 function toggleMove(taskId) {
-  moveOpenId.value = moveOpenId.value === taskId ? null : taskId;
+  moveOpenId.value = normId(moveOpenId.value) === normId(taskId) ? null : taskId;
 }
 
 /* ✅ Drag & Drop */
@@ -520,6 +551,23 @@ function onDrop(targetStatusId) {
   moveTask(draggedTaskId.value, targetStatusId);
   draggedTaskId.value = null;
   dragOverStatusId.value = null;
+}
+
+/* ✅ Keep dropdowns open: update local tasks list instead of loadBoard() */
+function updateTaskStatusLocally(taskId, newStatusId) {
+  const idx = tasks.value.findIndex((t) => normId(t.id) === normId(taskId));
+  if (idx === -1) return;
+  tasks.value[idx] = { ...tasks.value[idx], statusId: newStatusId };
+}
+
+function moveTask(taskId, newStatusId) {
+  props.model.updateTaskStatus(taskId, newStatusId);
+  moveOpenId.value = null;
+
+  updateTaskStatusLocally(taskId, newStatusId);
+
+  // Persist open state so even if model triggers rerender, it restores
+  saveOpenState();
 }
 
 function openEdit(task) {
@@ -597,12 +645,6 @@ function handleAssignment(taskId) {
   } else {
     props.model.unassignTaskFromCurrentUser(taskId);
   }
-  loadBoard();
-}
-
-function moveTask(taskId, newStatusId) {
-  props.model.updateTaskStatus(taskId, newStatusId);
-  moveOpenId.value = null;
   loadBoard();
 }
 
@@ -785,7 +827,6 @@ input[type="datetime-local"] {
   text-overflow: ellipsis;
 }
 
-/* ✅ FIX: add standard property 'line-clamp' to avoid VSCode warning */
 .task-desc {
   margin: 0 0 8px 0;
   color: #334155;
