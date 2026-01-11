@@ -5,14 +5,14 @@
       <li
         v-for="t in getTasks()"
         :key="t.id"
-        :class="['deadline-item', urgencyClass(t.deadline)]"
+        :class="['deadline-item', urgencyClass(t.deadline, t.userId)]"
       >
         <router-link
           class="task-link"
           to="/taskboard"
           @click="setCurrentProject(t.projectId)"
         >
-          {{ formatDeadline(t.deadline) }} — {{ t.name }}
+          {{ formatDeadline(t.deadline, t.userId) }} — {{ t.name }}
         </router-link>
 
         <div v-if="currentProjectOnly != true" class="project-line">
@@ -40,7 +40,7 @@ export default {
       return this.model.getTasksByDeadline();
     },
 
-    urgencyClass(deadline) {
+    urgencyClass(deadline, assignee) {
       if (!deadline) return "is-normal";
       const d = deadline instanceof Date ? deadline : new Date(deadline);
       if (Number.isNaN(d.getTime())) return "is-normal";
@@ -48,12 +48,13 @@ export default {
       const diffHours = (d.getTime() - Date.now()) / (1000 * 60 * 60);
 
       if (diffHours < 0) return "is-past";
+      if (assignee === null) return "is-unassigned";
       if (diffHours <= 24) return "is-urgent";
       if (diffHours <= 72) return "is-soon";
       return "is-normal";
     },
 
-    formatDeadline(deadline) {
+    formatDeadline(deadline, assignee) {
       if (!deadline) return "";
       const d = deadline instanceof Date ? deadline : new Date(deadline);
 
@@ -96,12 +97,13 @@ export default {
         hour12: false,
       }); // "22:00"
 
-      let infoText = "";
+      let unassignedInfo = assignee === null ? "Unassigned " : "";
+      let missedInfo = "";
       let timeLeft = "";
       const diffMs = d.getTime() - now;
 
       if (diffMs < 0) {
-        infoText = "Missed! "
+        missedInfo = "Missed! "
         timeLeft = " (past)";
       } else {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -116,6 +118,8 @@ export default {
           timeLeft = `(in ${diffDays} day${diffDays === 1 ? "" : "s"})`;
         }
       }
+      
+      const infoText = `${missedInfo}${unassignedInfo}`;
 
       return `${infoText}${datePart}, ${time}  ${timeLeft}`;
     },
@@ -203,6 +207,11 @@ export default {
 
 .deadline-item.is-past .task-link {
   color: #64748b;
+}
+
+.deadline-item.is-unassigned {
+  border-left-color: #6d0a88;
+  background: rgba(191, 17, 207, 0.05);
 }
 </style>
 ```
