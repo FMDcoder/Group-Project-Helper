@@ -1,5 +1,5 @@
 <template>
-  <div v-if="this.dbReady" :key="this.reRenderKey">
+  <div v-if="this.dbReady" class="topest" :key="this.reRenderKey">
     <nav class="top-nav">
       <div class="nav-inner">
         <div class="nav-left">
@@ -20,8 +20,11 @@
     </nav>
 
     <pre v-if="showDebug" class="debug">{{ results }}</pre>
-
-    <router-view :model="model" :reRenderKey="reRenderKey" />
+    <div class="content">
+      <router-view :model="model" :reRenderKey="reRenderKey" />
+    </div>
+  </div>
+  <div class="bottom-footer">
   </div>
 </template>
 
@@ -78,15 +81,29 @@ export default {
 </script>
 
 <style>
+
+h1, h2, h3, h4, h5, h6, p, span, a, button, li, ul, input {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+.topest {
+  top: 0;
+}
+
 /* main navbar container */
 .top-nav {
   position: sticky;
   top: 0;
   z-index: 1000;
 
-  background: rgba(241, 245, 249, 0.92);
+  background: #aebdf7;
   /*backdrop-filter: blur(10px); - this destroys positioning for new project modal*/
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #153968 !important;
 }
 
 /* keeps navbar aligned with .page max-width */
@@ -161,4 +178,16 @@ export default {
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
   overflow: auto;
 }
+
+.bottom-footer {
+  background-color: #7281bd;
+  width: 100%;
+  height: 200px;
+}
+
+.content {
+  width: 100%;
+  min-height: 80vh;
+}
+
 </style>

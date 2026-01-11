@@ -860,11 +860,14 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  background-color: #8495d8;
+  padding: 20px;
+  border-radius: 14px;
 }
 
 .column {
   flex: 1;
-  background: #ffffff;
+  background-color: #aebdf7;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 14px;

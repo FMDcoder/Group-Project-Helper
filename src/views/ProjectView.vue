@@ -16,34 +16,36 @@
     <div v-if="projectSelected()">
       <div class="layout">
         <!-- LEFT: Progress + deadlines -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Progress</h2>
-            <span class="badge">{{ getProgress() ?? 0 }}%</span>
+        <div class="card ">
+          <div class="card-progress">
+                <div class="card-header ">
+                <h2 class="card-title">Progress</h2>
+                <span class="badge">{{ getProgress() ?? 0 }}%</span>
+                </div>
+  
+                <div class="progress-block">
+                <!--div class="progress-row">
+                <span class="label">Deadline</span>
+                <span class="value">{{ project.deadline || "Not set" }}</span>
+                </div-->
+  
+                <progress class="progress" :value="getProgress()" max="100"></progress>
+                </div>
           </div>
-
-          <div class="progress-block">
-            <!--div class="progress-row">
-              <span class="label">Deadline</span>
-              <span class="value">{{ project.deadline || "Not set" }}</span>
-            </div-->
-
-            <progress class="progress" :value="getProgress()" max="100"></progress>
-          </div>
-
           <div class="divider"></div>
-
-          <div class="card-header">
-            <h3 class="card-title">Upcoming Deadlines</h3>
+          <div class="card-deadlines">
+                <div class="card-header">
+                <h3 class="card-title">Upcoming Deadlines</h3>
+                </div>
+  
+                <div class="deadlines-list">
+                <Deadlines :model="model" :current-project-only="true" />
+                </div>
           </div>
-
-          <div class="deadlines-list">
-            <Deadlines :model="model" :current-project-only="true" />
           </div>
-        </div>
 
         <!-- RIGHT: Meetings -->
-        <div class="card">
+        <div class="card card-meetings">
           <div class="card-header">
             <h3 class="card-title">Meetings</h3>
           </div>
@@ -560,11 +562,30 @@ onBeforeUnmount(() => {
 
 /* Card */
 .card {
-  background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+}
+
+.card-progress {
+  margin-top: -15px;
+  background-color: #aebdf7;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.card-deadlines {
+  border: 2px solid #aebdf7;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.card-meetings {
+  background-color: #aebdf7;
+  padding: 20px;
+  border-radius: 16px;
 }
 
 .card-header {
@@ -763,7 +784,7 @@ div.edit-btn {
 
 .deadlines-list :deep(li) {
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 3px solid #e2e8f0;
   border-radius: 12px;
   margin: 10px 0;
   background: #ffffff;

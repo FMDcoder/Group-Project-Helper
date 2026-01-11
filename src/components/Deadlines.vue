@@ -139,9 +139,8 @@ export default {
 }
 
 .deadline-item {
-  border: 1px solid #e2e8f0;
-  border-left: 6px solid #2563eb;
-  border-radius: 12px;
+  border: 3px solid #e2e8f0;
+  border-left: 3px solid #2563eb;
   margin: 10px 0;
   overflow: hidden;
   background: rgba(37, 99, 235, 0.05);
@@ -214,4 +213,3 @@ export default {
   background: rgba(191, 17, 207, 0.05);
 }
 </style>
-```

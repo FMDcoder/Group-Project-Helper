@@ -7,7 +7,7 @@
 
     <div class="layout">
       <!-- Left: Deadlines -->
-      <div class="card">
+      <div class="card card-deadlines">
         <div class="card-header">
           <h2 class="card-title">Upcoming Deadlines</h2>
         </div>
@@ -19,7 +19,7 @@
       </div>
 
       <!-- Right: Projects -->
-      <div class="card">
+      <div class="card card-project">
         <div class="card-header">
           <h2 class="card-title">Active Projects</h2>
         </div>
@@ -89,11 +89,18 @@ export default {
 
 /* Card */
 .card {
-  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+}
+
+.card-project {
+  background-color: #aebdf7;
+}
+
+.card-deadlines {
+  border: 2px solid #aebdf7;
 }
 
 .card-header {
@@ -152,7 +159,7 @@ export default {
 
 .deadlines-list :deep(li) {
   padding: 10px 10px;
-  border: 1px solid #e2e8f0;
+  
   border-radius: 12px;
   margin-bottom: 10px;
   background: #ffffff;
