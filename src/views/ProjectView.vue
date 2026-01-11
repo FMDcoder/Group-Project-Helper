@@ -23,10 +23,10 @@
           </div>
 
           <div class="progress-block">
-            <div class="progress-row">
+            <!--div class="progress-row">
               <span class="label">Deadline</span>
               <span class="value">{{ project.deadline || "Not set" }}</span>
-            </div>
+            </div-->
 
             <progress class="progress" :value="getProgress()" max="100"></progress>
           </div>
