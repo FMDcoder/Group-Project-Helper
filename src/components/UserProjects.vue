@@ -52,7 +52,7 @@ li {
   padding: 10px 12px;
   margin: 10px 0;
   border-radius: 12px;
-  background-color: #d8d8d8 !important;
+  background-color: #eaeaea !important;
   cursor: pointer;
   font-weight: 700;
 
@@ -60,7 +60,8 @@ li {
 }
 
 li:hover {
-  background: rgba(37, 99, 235, 0.22) !important;
+  background: rgba(234, 234, 234, 0.55) !important;
+  /*background: rgba(79, 126, 228, 0.22) !important;*/
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.10);
 }

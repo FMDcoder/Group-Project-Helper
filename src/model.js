@@ -85,7 +85,7 @@ const MOCK_DATA = {
   ],
   task: [
     // [name, description, deadline, projectId, status]
-    ["Start view", "Front page of application", "2026-01-10 22:00:00", 1, 3],
+    ["Start view", "Front page of application", "2026-01-10 22:00:00", 1, 2],
     ["Project view", "Details about the projects", "2026-01-11 23:59:59", 1, 3],
     ["Taskboard view", "A way to structure what need to be done", "2026-01-10 10:01:00", 1, 3],
     ["Bugfixes", "Not that our application has any bugs", "2026-01-11 18:30:00", 1, 2],
@@ -385,15 +385,15 @@ class GroupProjectHelperModel {
 
   getTasksByDeadline() {
     if (!this.currentUser?.id) return [];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const past = new Date();
+    past.setDate(past.getDate() - 3);
     const soon = new Date();
     soon.setDate(soon.getDate() + 3);
 
     return sqlToJs(
       this.db.exec(`
         SELECT task.id, task.name, deadline, taskUser.userId AS userId,
-          project.name AS projectName, project.id AS projectId
+          project.name AS projectName, project.id AS projectId, status.name AS status
         FROM project, task, projectUser, status LEFT JOIN taskUser
         ON task.id = taskUser.taskId
         WHERE task.projectId = project.id
@@ -406,7 +406,7 @@ class GroupProjectHelperModel {
           OR (
             taskUser.userId IS NULL
             AND task.deadline
-            BETWEEN '${this.toSqlDatetime(yesterday)}'
+            BETWEEN '${this.toSqlDatetime(past)}'
             AND '${this.toSqlDatetime(soon)}'
           )
         )
@@ -417,15 +417,15 @@ class GroupProjectHelperModel {
   
   getProjectTasksByDeadline() {
     if (!this.currentUser?.id) return [];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const past = new Date();
+    past.setDate(past.getDate() - 3);
     const soon = new Date();
     soon.setDate(soon.getDate() + 3);
 
     return sqlToJs(
       this.db.exec(`
-        SELECT task.id, task.name, deadline, userId,
-          project.name AS projectName
+        SELECT task.id, task.name, deadline, taskUser.userId AS userId,
+          project.name AS projectName, status.name AS status
         FROM project, status, task LEFT JOIN taskUser
         ON task.id = taskUser.taskId
         WHERE task.projectId = project.id
@@ -437,7 +437,7 @@ class GroupProjectHelperModel {
           OR (
             userId IS NULL
             AND task.deadline
-            BETWEEN '${this.toSqlDatetime(yesterday)}'
+            BETWEEN '${this.toSqlDatetime(past)}'
             AND '${this.toSqlDatetime(soon)}'
           )
         )

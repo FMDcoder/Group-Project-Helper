@@ -12,7 +12,8 @@
           to="/taskboard"
           @click="setCurrentProject(t.projectId)"
         >
-          {{ formatDeadline(t.deadline, t.userId) }} — {{ t.name }}
+          {{ formatDeadline(t.deadline) }} — {{ t.name }}
+          <div class="task-info">{{ getInfoText(t.status, t.userId) }}</div>
         </router-link>
 
         <div v-if="currentProjectOnly != true" class="project-line">
@@ -54,7 +55,7 @@ export default {
       return "is-normal";
     },
 
-    formatDeadline(deadline, assignee) {
+    formatDeadline(deadline) {
       if (!deadline) return "";
       const d = deadline instanceof Date ? deadline : new Date(deadline);
 
@@ -97,13 +98,10 @@ export default {
         hour12: false,
       }); // "22:00"
 
-      let unassignedInfo = assignee === null ? "Unassigned " : "";
-      let missedInfo = "";
       let timeLeft = "";
       const diffMs = d.getTime() - now;
 
       if (diffMs < 0) {
-        missedInfo = "Missed! "
         timeLeft = " (past)";
       } else {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -119,13 +117,15 @@ export default {
         }
       }
       
-      const infoText = `${missedInfo}${unassignedInfo}`;
-
-      return `${infoText}${datePart}, ${time}  ${timeLeft}`;
+      return `${datePart}, ${time}  ${timeLeft}`;
     },
 
     setCurrentProject(projectId) {
       this.model.setCurrentProject(projectId);
+    },
+
+    getInfoText(status, assignee) {
+      return (assignee === null) ? "Unassigned" : status;
     },
   },
 };
@@ -164,6 +164,20 @@ export default {
   outline: 3px solid rgba(37, 99, 235, 0.35);
   outline-offset: 2px;
   background: rgba(37, 99, 235, 0.22);
+}
+
+.task-info {
+  float: right;
+  text-align: right;
+  font-size: 15px;
+  font-weight: normal;
+  font-style: italic;
+  text-decoration: none;
+  color: #64748b;
+}
+
+.task-info:hover {
+  text-decoration: none;
 }
 
 .project-line {

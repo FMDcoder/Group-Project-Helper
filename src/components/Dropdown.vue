@@ -48,12 +48,22 @@ export default {
       selectedOption: null,
       modalState: false,
       canClose: true,
+      escHandler: null,
     };
   },
 
   methods: {
     toggleDropdown() {
       this.isOpen = !this.isOpen;
+      
+      if (this.isOpen) {
+        this.escHandler = (e) => {
+          if (e.key === "Escape") {
+            this.escClose()
+          }
+        };
+        window.addEventListener("keydown", this.escHandler);
+      }
     },
 
     setOption(option) {
@@ -85,6 +95,23 @@ export default {
         this.canClose = !this.modalState;
       }
     },
+    escClose()
+    {
+      const box=this.$refs.theBox
+      if (this.canClose) {
+        if(this.isOpen && box) {
+          this.isOpen = false
+
+          if (this.escHandler) {
+            window.removeEventListener("keydown", this.escHandler);
+            this.escHandler = null;
+          }
+        }
+      }
+      else {
+        this.canClose = !this.modalState;
+      }
+    },
     closeBox()
     {
       const box=this.$refs.theBox
@@ -107,6 +134,7 @@ export default {
 
   beforeUnmount(){
     document.removeEventListener("click", this.clickoutside)
+    if (this.escHandler) window.removeEventListener("keydown", this.escHandler);
   }
 };
 </script>
@@ -137,7 +165,8 @@ export default {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: rgba(250, 250, 250, 0.9);
+  /*background: rgba(250, 250, 250, 0.9);*/
+  background: rgba(185, 197, 248, 0.9);
   border-radius: 12px;
   padding: 0.4rem 0.55rem; /* a bit tighter */
   min-width: 240px;

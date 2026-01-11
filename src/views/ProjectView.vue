@@ -4,7 +4,7 @@
       <h2>
         Project Overview
         <!--{{ getCurrentProjectName() || "" }}-->
-        <div class="edit-btn">
+        <div v-if="projectSelected()" class="edit-btn">
           <EditProjectBtn :model="model" />
         </div>
       </h2>
@@ -13,10 +13,18 @@
           "Please select a project below to view the details." }}</p>
     </div>
 
-    <div v-if="projectSelected()">
+    <div v-if="!projectSelected()" class="layout">
+      <div class="card card-temp">
+        <div class="projects-wrapper">
+          <UserProjects :model="props.model" :redirect="false" />
+        </div>
+      </div>
+    </div>
+
+    <div v-else>
       <div class="layout">
         <!-- LEFT: Progress + deadlines -->
-        <div class="card ">
+        <div class="card card-filled">
           <div class="card-progress">
                 <div class="card-header ">
                 <h2 class="card-title">Progress</h2>
@@ -75,164 +83,159 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- MODAL: Add meeting -->
-      <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
-          <div class="modal-header">
-            <h3 class="modal-title">New meeting</h3>
-            <button class="btn btn-ghost" @click="closeModal" aria-label="Close">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <label class="field">
-              <span class="field-label">Name</span>
-              <input
-                ref="meetingNameInput"
-                v-model="newMeeting.title"
-                type="text"
-                placeholder="e.g., Weekly check-in"
-              />
-            </label>
-
-            <label class="field">
-              <span class="field-label">Place</span>
-              <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
-            </label>
-
-            <label class="field">
-              <span class="field-label">Date</span>
-              <input v-model="newMeeting.date" type="date" />
-            </label>
-
-            <label class="field">
-              <span class="field-label">Time</span>
-              <input v-model="newMeeting.time" type="time" />
-            </label>
-
-            <p v-if="isAddDisabled" class="hint">
-              Fill in name, place, date and time to enable Add.
-            </p>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn" @click="closeModal">Cancel</button>
-            <button
-              class="btn btn-primary"
-              @click="confirmAdd"
-              :disabled="isAddDisabled"
-              :aria-disabled="isAddDisabled"
-            >
-              Add
-            </button>
-          </div>
+    <!-- MODAL: Add meeting -->
+    <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
+        <div class="modal-header">
+          <h3 class="modal-title">New meeting</h3>
+          <button class="btn btn-ghost" @click="closeModal" aria-label="Close">✕</button>
         </div>
-      </div>
 
-      <!-- MODAL: Edit meeting -->
-      <div v-if="showModalEdit" class="modal-backdrop" @click.self="closeModalEdit">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Edit meeting">
-          <div class="modal-header">
-            <h3 class="modal-title">Edit meeting</h3>
-            <button class="btn btn-ghost" @click="closeModalEdit" aria-label="Close">✕</button>
-          </div>
+        <div class="modal-body">
+          <label class="field">
+            <span class="field-label">Name</span>
+            <input
+              ref="meetingNameInput"
+              v-model="newMeeting.title"
+              type="text"
+              placeholder="e.g., Weekly check-in"
+            />
+          </label>
 
-          <div class="modal-body">
-            <label class="field">
-              <span class="field-label">Name</span>
-              <input
-                ref="meetingEditNameInput"
-                v-model="newMeeting.title"
-                type="text"
-                placeholder="e.g., Weekly check-in"
-              />
-            </label>
+          <label class="field">
+            <span class="field-label">Place</span>
+            <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
+          </label>
 
-            <label class="field">
-              <span class="field-label">Place</span>
-              <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
-            </label>
+          <label class="field">
+            <span class="field-label">Date</span>
+            <input v-model="newMeeting.date" type="date" />
+          </label>
 
-            <label class="field">
-              <span class="field-label">Date</span>
-              <input v-model="newMeeting.date" type="date" />
-            </label>
+          <label class="field">
+            <span class="field-label">Time</span>
+            <input v-model="newMeeting.time" type="time" />
+          </label>
 
-            <label class="field">
-              <span class="field-label">Time</span>
-              <input v-model="newMeeting.time" type="time" />
-            </label>
-
-            <p v-if="isAddDisabled" class="hint">
-              Fill in name, place, date and time to enable Edit.
-            </p>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn" @click="closeModalEdit">Cancel</button>
-            <button
-              class="btn btn-primary"
-              @click="confirmEdit"
-              :disabled="isAddDisabled"
-              :aria-disabled="isAddDisabled"
-            >
-              Edit
-            </button>
-          </div>
+          <p v-if="isAddDisabled" class="hint">
+            Fill in name, place, date and time to enable Add.
+          </p>
         </div>
-      </div>
 
-      <!-- MODAL: Confirm delete -->
-      <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm delete meeting">
-          <div class="modal-header">
-            <h3 class="modal-title">Delete meeting?</h3>
-            <button class="btn btn-ghost" @click="closeDeleteModal" aria-label="Close">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <p class="hint" style="margin:0;">
-              Are you sure you want to delete <b>{{ meetingToDelete?.name }}</b>?
-              This action cannot be undone.
-            </p>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn" @click="closeDeleteModal">Cancel</button>
-            <button class="btn btn-danger" @click="confirmDelete">Delete</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODAL: Confirm create time exists -->
-      <div v-if="showConfirmModal" class="modal-backdrop" @click.self="closeConfirmModal">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm create meeting">
-          <div class="modal-header">
-            <h3 class="modal-title">Double booking?</h3>
-            <button class="btn btn-ghost" @click="closeConfirmModal" aria-label="Close">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <p class="hint" style="margin:0;">
-              There is already a meeting planned for {{ "insert time" }},
-              are you sure you want to create {{ "insert name" }}?
-            </p>
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn" @click="closeConfirmModal">Cancel</button>
-            <button v-if="showModal" class="btn btn-primary" @click="confirmCreateSameTime">Create</button>
-            <button v-else class="btn btn-primary" @click="confirmUpdateSameTime">Edit</button>
-          </div>
+        <div class="modal-actions">
+          <button class="btn" @click="closeModal">Cancel</button>
+          <button
+            class="btn btn-primary"
+            @click="confirmAdd"
+            :disabled="isAddDisabled"
+            :aria-disabled="isAddDisabled"
+          >
+            Add
+          </button>
         </div>
       </div>
     </div>
 
-    <div v-else class="card">
-      <div class="projects-wrapper">
-        <UserProjects :model="props.model" :redirect="false" />
+    <!-- MODAL: Edit meeting -->
+    <div v-if="showModalEdit" class="modal-backdrop" @click.self="closeModalEdit">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Edit meeting">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit meeting</h3>
+          <button class="btn btn-ghost" @click="closeModalEdit" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <label class="field">
+            <span class="field-label">Name</span>
+            <input
+              ref="meetingEditNameInput"
+              v-model="newMeeting.title"
+              type="text"
+              placeholder="e.g., Weekly check-in"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Place</span>
+            <input v-model="newMeeting.place" type="text" placeholder="e.g., Zoom / Room B204" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Date</span>
+            <input v-model="newMeeting.date" type="date" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Time</span>
+            <input v-model="newMeeting.time" type="time" />
+          </label>
+
+          <p v-if="isAddDisabled" class="hint">
+            Fill in name, place, date and time to enable Edit.
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" @click="closeModalEdit">Cancel</button>
+          <button
+            class="btn btn-primary"
+            @click="confirmEdit"
+            :disabled="isAddDisabled"
+            :aria-disabled="isAddDisabled"
+          >
+            Edit
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- MODAL: Confirm delete -->
+    <div v-if="showDeleteModal" class="modal-backdrop" @click.self="closeDeleteModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm delete meeting">
+        <div class="modal-header">
+          <h3 class="modal-title">Delete meeting?</h3>
+          <button class="btn btn-ghost" @click="closeDeleteModal" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="hint" style="margin:0;">
+            Are you sure you want to delete <b>{{ meetingToDelete?.name }}</b>?
+            This action cannot be undone.
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" @click="closeDeleteModal">Cancel</button>
+          <button class="btn btn-danger" @click="confirmDelete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Confirm create time exists -->
+    <div v-if="showConfirmModal" class="modal-backdrop" @click.self="closeConfirmModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm create meeting">
+        <div class="modal-header">
+          <h3 class="modal-title">Double booking?</h3>
+          <button class="btn btn-ghost" @click="closeConfirmModal" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="hint" style="margin:0;">
+            There is already a meeting planned for {{ "insert time" }},
+            are you sure you want to create {{ "insert name" }}?
+          </p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" @click="closeConfirmModal">Cancel</button>
+          <button v-if="showModal" class="btn btn-primary" @click="confirmCreateSameTime">Create</button>
+          <button v-else class="btn btn-primary" @click="confirmUpdateSameTime">Edit</button>
+        </div>
+      </div>
+    </div>
+
   </section>
 </template>
 
@@ -569,6 +572,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
 }
 
+div.card-filled {
+  padding: 16px 0 0 0;
+}
+
 .card-progress {
   margin-top: -15px;
   background-color: #aebdf7;
@@ -578,6 +585,7 @@ onBeforeUnmount(() => {
 
 .card-deadlines {
   border: 2px solid #aebdf7;
+  margin: 0 10px 10px 10px;
   padding: 20px;
   border-radius: 16px;
 }
@@ -600,6 +608,11 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 20px;
   letter-spacing: -0.02em;
+}
+
+.card-temp {
+  display: grid;
+  background-color: #aebdf7;
 }
 
 /* Badge */

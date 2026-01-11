@@ -8,9 +8,11 @@
       <p v-else class="subtitle">Select a project to view tasks.</p>
     </div>
 
-    <div v-if="!currentProjectId" class="card">
-      <div class="projects-wrapper">
-        <UserProjects :model="props.model" :redirect="false" />
+    <div v-if="!currentProjectId" class="layout">
+      <div class="card card-temp">
+        <div class="projects-wrapper">
+          <UserProjects :model="props.model" :redirect="false" />
+        </div>
       </div>
     </div>
 
@@ -842,7 +844,7 @@ onBeforeUnmount(() => {
 .page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px;
+  padding: 18px 0;
 }
 
 .page-header { margin-bottom: 14px; }
@@ -854,6 +856,17 @@ onBeforeUnmount(() => {
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+}
+
+.card-temp {
+  background-color: #aebdf7;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+  align-items: start;
 }
 
 .taskboard {

@@ -182,7 +182,7 @@ html, body {
 .bottom-footer {
   background-color: #7281bd;
   width: 100%;
-  height: 200px;
+  /*height: 200px;*/
 }
 
 .content {
