@@ -392,13 +392,15 @@ class GroupProjectHelperModel {
     return sqlToJs(
       this.db.exec(`
         SELECT task.id, task.name, deadline, project.name AS projectName, project.id AS projectId
-        FROM project, task LEFT JOIN taskUser
+        FROM project, task, projectUser LEFT JOIN taskUser
         ON task.id = taskUser.taskId
-        WHERE task.projectId = project.id
+        WHERE task.projectId = project.id 
+        AND projectUser.userId = ${this.currentUser.id}
+        AND project.id = projectUser.projectId
         AND (
           taskUser.userId = ${this.currentUser.id}
           OR (
-            userId IS NULL
+            taskUser.userId IS NULL
             AND task.deadline
             BETWEEN '${this.toSqlDatetime(now)}'
             AND '${this.toSqlDatetime(soon)}'

@@ -155,7 +155,7 @@ export default {
 
     leaveSelected() {
       if (!this.selectedProjectId) return;
-
+      
       this.setCurrentProject(null);
       this.model.leaveUserProject(this.selectedProjectId)
 
