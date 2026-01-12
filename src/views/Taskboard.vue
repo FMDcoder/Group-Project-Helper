@@ -951,6 +951,7 @@ onBeforeUnmount(() => {
   margin-bottom: 12px;
   border: 1px dashed #e2e8f0;
   border-radius: 12px;
+  background-color: rgb(156, 169, 228);
   color: #64748b;
   font-size: 12px;
 }
