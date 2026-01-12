@@ -160,9 +160,9 @@ export default {
       this.model.joinUserProject()
 
       // If you want to navigate to the project page:
-      if (this.$router) {
-        this.$router.push("/project");
-      }
+      //if (this.$router) {
+      //  this.$router.push("/project");
+      //}
 
       this.closePopup();
     },

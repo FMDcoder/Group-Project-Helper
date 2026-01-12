@@ -395,6 +395,10 @@ class GroupProjectHelperModel {
   }
 
   // ---------- existing getters ----------
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
   getStatusID(name) {
     return this.db.exec(`SELECT id FROM status WHERE name="${name}"`);
   }
@@ -416,6 +420,10 @@ class GroupProjectHelperModel {
 
   getCurrentProject() {
     return this.currentProject;
+  }
+
+  getCurrentProjectId() {
+      return this.currentProject.id
   }
 
   getProject(projectID) {
@@ -563,10 +571,6 @@ class GroupProjectHelperModel {
     }
   }
 
-  getCurrentProjectId() {
-      return this.currentProject.id
-  }
-
   createProject(details) {
     if (this.getProjectByName(details.name).length > 0) return 1;
 
@@ -602,6 +606,7 @@ class GroupProjectHelperModel {
     this.db.run(
       `INSERT INTO projectUser (userId, projectId) VALUES (${this.currentUser.id}, ${projectId})`
     );
+    this.notifyObservers();
   }
   
   leaveUserProject(projectid) {

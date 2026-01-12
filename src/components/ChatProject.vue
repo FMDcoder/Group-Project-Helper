@@ -17,7 +17,7 @@
           <div ref="chatContainer" class="chat-container">
                 <div v-for="message in this.model.getMessages()" :key="message.id">
                     <div>
-                          <div v-if="message[6] == 'Joel'" class="message-container response-container">
+                          <div v-if="message[6] == this.model.getCurrentUser().name" class="message-container response-container">
                                           <label class="response-name">You</label>
                                           <div class="message response">
                                           <span> {{ message[4] }}</span>
@@ -119,11 +119,11 @@
 .send-message-container {
     padding: 10px;
 }
-.send-message-container input {
+/*.send-message-container input {
 }
 .send-message-container button {
     
-}
+}*/
 
 .message-container {
   display: block;
