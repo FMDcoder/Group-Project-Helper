@@ -16,16 +16,18 @@
         <div>
           <div class="chat-container">
                 <div v-for="message in this.model.getMessages()" :key="updateVar">
-                    <div v-if="message.name == 'Joel'">
-                          <label class="response-name">You</label>
-                          <div class="message response">
-                               <span> {{ message.message }}</span>
+                    <div>
+                          <div v-if="message[6] == 'Joel'">
+                                          <label class="response-name">You</label>
+                                          <div class="message response">
+                                          <span> {{ message[4] }}</span>
+                                          </div>
                           </div>
-                    </div>
-                    <div v-else>
-                        <label class="response-comment">{{ message.name }}</label>
-                          <div class="message">
-                                <span> {{ message.message }}</span>
+                          <div v-else>
+                          <label class="response-comment">{{ message[6] }}</label>
+                                          <div class="message">
+                                          <span> {{ message[4]}}</span>
+                                          </div>
                           </div>
                     </div>
                 </div>

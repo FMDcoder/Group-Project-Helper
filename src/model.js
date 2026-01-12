@@ -138,19 +138,19 @@ const MOCK_DATA = {
   ],
   message: [
     // Format: [projectId, userId, sent, message]
-    [1, 1, '2026-01-12 09:00:00', 'Hey team, have we started the HCI project?'],
-    [1, 2, '2026-01-12 09:15:00', 'I am working on the initial wireframes.'],
-    [1, 3, '2026-01-12 09:30:00', 'I can take care of the user research.'],
-    [2, 2, '2026-01-10 14:00:00', 'Did anyone check the venue for the concert?'],
-    [2, 4, '2026-01-10 14:05:00', 'Yes, it is booked for Friday.'],
-    [3, 1, '2026-01-11 11:00:00', 'ML project: I started with data preprocessing.'],
-    [3, 3, '2026-01-11 11:10:00', 'Great, I will focus on the model training.'],
-    [4, 2, '2026-01-12 13:00:00', 'Presentation slides are almost ready.'],
-    [4, 4, '2026-01-12 13:05:00', 'I will review them and give feedback.'],
-    [5, 3, '2026-01-09 10:00:00', 'Book review: I loved the ending chapter!'],
-    [5, 1, '2026-01-09 10:20:00', 'Me too, really inspiring.'],
-    [6, 4, '2026-01-08 16:00:00', 'Hidden group: did anyone finish reading?'],
-    [6, 2, '2026-01-08 16:10:00', 'I am halfway through.'],
+    [1, 1, '2025-01-12 09:00:00', 'Hey team, have we started the HCI project?'],
+    [1, 2, '2025-01-12 09:15:00', 'I am working on the initial wireframes.'],
+    [1, 3, '2025-01-12 09:30:00', 'I can take care of the user research.'],
+    [2, 2, '2025-01-10 14:00:00', 'Did anyone check the venue for the concert?'],
+    [2, 4, '2025-01-10 14:05:00', 'Yes, it is booked for Friday.'],
+    [3, 1, '2025-01-11 11:00:00', 'ML project: I started with data preprocessing.'],
+    [3, 3, '2025-01-11 11:10:00', 'Great, I will focus on the model training.'],
+    [4, 2, '2025-01-12 13:00:00', 'Presentation slides are almost ready.'],
+    [4, 4, '2025-01-12 13:05:00', 'I will review them and give feedback.'],
+    [5, 3, '2025-01-09 10:00:00', 'Book review: I loved the ending chapter!'],
+    [5, 1, '2025-01-09 10:20:00', 'Me too, really inspiring.'],
+    [6, 4, '2025-01-08 16:00:00', 'Hidden group: did anyone finish reading?'],
+    [6, 2, '2025-01-08 16:10:00', 'I am halfway through.'],
   ],
 
   messagesRead: [
@@ -667,12 +667,13 @@ class GroupProjectHelperModel {
   }
 
   getMessages() {
-    return sqlToJs(this.db.exec(
+    const result = this.db.exec(
       `SELECT * FROM message JOIN user 
       ON user.id = message.userId
       WHERE message.projectId = ${this.currentProject.id}
       ORDER BY sent ASC`
-    ))
+    )
+    return result[0].values
   }
 
   sendMessage(content) {
