@@ -69,16 +69,23 @@
 
               this.$nextTick(() => {
                 this.$refs.messageInput?.focus?.();
+                this.$refs.messageInput.addEventListener("keypress", this.inputEnterHandler);
               });
 
             },
             closeMessagePopup() {
                 this.showMessageModel = false;
                 window.removeEventListener('keydown', this.handleKeyDown);
+                window.removeEventListener('keypress', this.inputEnterHandler);
             },
             handleKeyDown(e) {
                 if (e.key === 'Escape') {
                     this.closeMessagePopup();
+                }
+            },
+            inputEnterHandler(e) {
+                if (e.key === 'Enter' && this.newMessage.content.length > 0) {
+                  this.sendMessage();
                 }
             },
             readAllMessages() {
@@ -109,8 +116,12 @@
             },
 
             'model.getCurrentProjectId()'(id) {
+                window.removeEventListener('keydown', this.handleKeyDown);
                 this.unreadMessages = this.model.getUnreadMessages()
             }
+        },
+        beforeUnmount() {
+          window.removeEventListener('keypress', this.inputEnterHandler);
         }
     }
 </script>
