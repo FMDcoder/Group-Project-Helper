@@ -1286,5 +1286,9 @@ input[type="datetime-local"] {
 @media (max-width: 1000px) {
   .taskboard { flex-direction: column; }
   .field-row { grid-template-columns: 1fr; }
+  .column {
+    width: 90%;
+    margin-left: 5%;
+  }
 }
 </style>
