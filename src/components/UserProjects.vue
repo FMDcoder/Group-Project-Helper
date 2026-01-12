@@ -24,7 +24,7 @@ export default {
       return this.model.getUserProjects();
     },
     setCurrentProject(id) {
-      this.model.setCurrentProject(id);
+      this.model.setCurrentProject(id, true);
       if (this.redirect == true) {
         this.$router.push("/project");
       }

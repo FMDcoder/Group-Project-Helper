@@ -24,9 +24,16 @@ const DATABASE = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     projectId INTEGER NOT NULL,
     userId INTEGER NOT NULL,
+    sent DATETIME NOT NULL,
     message TEXT NOT NULL,
     FOREIGN KEY (projectId) REFERENCES project(id) ON DELETE CASCADE,
     FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+  );`,
+  `CREATE TABLE messagesRead (
+    userId INTEGER NOT NULL,
+    messageId INTEGER NOT NULL,
+    FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (messageId) REFERENCES message(id) ON DELETE CASCADE
   );`,
   `CREATE TABLE meeting (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,6 +136,33 @@ const MOCK_DATA = {
     [3, 8],
     [4, 8],
   ],
+  message: [
+    // Format: [projectId, userId, sent, message]
+    [1, 1, '2026-01-12 09:00:00', 'Hey team, have we started the HCI project?'],
+    [1, 2, '2026-01-12 09:15:00', 'I am working on the initial wireframes.'],
+    [1, 3, '2026-01-12 09:30:00', 'I can take care of the user research.'],
+    [2, 2, '2026-01-10 14:00:00', 'Did anyone check the venue for the concert?'],
+    [2, 4, '2026-01-10 14:05:00', 'Yes, it is booked for Friday.'],
+    [3, 1, '2026-01-11 11:00:00', 'ML project: I started with data preprocessing.'],
+    [3, 3, '2026-01-11 11:10:00', 'Great, I will focus on the model training.'],
+    [4, 2, '2026-01-12 13:00:00', 'Presentation slides are almost ready.'],
+    [4, 4, '2026-01-12 13:05:00', 'I will review them and give feedback.'],
+    [5, 3, '2026-01-09 10:00:00', 'Book review: I loved the ending chapter!'],
+    [5, 1, '2026-01-09 10:20:00', 'Me too, really inspiring.'],
+    [6, 4, '2026-01-08 16:00:00', 'Hidden group: did anyone finish reading?'],
+    [6, 2, '2026-01-08 16:10:00', 'I am halfway through.'],
+  ],
+
+  messagesRead: [
+    [2, 1], // Sawan saw Joel's message in project 1
+    [3, 1], // Vanessa saw Joel's message in project 1
+    [3, 2], // Vanessa saw Sawan's message in project 1
+    [4, 4], // Mohamad saw Sawan's message in project 2
+    [3, 6], // Vanessa saw Joel's message in project 3
+    [4, 8], // Mohamad saw Sawan's message in project 4
+    [1,10], // Joel saw Vanessa's message in project 5
+    [2,12], // Sawan saw Mohamad's message in project 6
+  ]
 };
 
 function formatDate(date) {
@@ -220,6 +254,20 @@ class GroupProjectHelperModel {
          VALUES ("${m[0]}", "${m[1]}", "${m[2]}", ${m[3]})`
       );
       this._addUsersToMeeting(i + 1, m[3]);
+    });
+
+    MOCK_DATA.message.forEach(m => {
+      this.db.exec(
+        `INSERT INTO message (projectId, userId, sent, message)
+         VALUES (${m[0]}, ${m[1]}, "${m[2]}", "${m[3]}")`
+      );
+    })
+
+    MOCK_DATA.messagesRead.forEach(mr => {
+      this.db.exec(
+          `INSERT INTO messagesRead (userId, messageId)
+          VALUES (${mr[0]}, ${mr[1]})`
+      );
     });
 
     this.dbReady = true;
@@ -515,6 +563,10 @@ class GroupProjectHelperModel {
     }
   }
 
+  getCurrentProjectId() {
+      return this.currentProject.id
+  }
+
   createProject(details) {
     if (this.getProjectByName(details.name).length > 0) return 1;
 
@@ -598,6 +650,55 @@ class GroupProjectHelperModel {
   deleteMeeting(id) {
     this._removeUsersToMeeting(id, this.currentProject.id);
     this.db.run(`DELETE FROM meeting WHERE id = ${id}`);
+  }
+
+  getUnreadMessages() {
+    const result = this.db.exec(`
+      SELECT COUNT(*) as count
+      FROM message
+      WHERE message.projectId = ${this.currentProject.id}
+          AND message.userId <> ${this.currentUser.id} -- messages not sent by me
+          AND message.id NOT IN (
+                SELECT messageId FROM messagesRead WHERE userId = ${this.currentUser.id}
+          )
+    `);
+
+    return result[0].values[0][0]
+  }
+
+  getMessages() {
+    return sqlToJs(this.db.exec(
+      `SELECT * FROM message JOIN user 
+      ON user.id = message.userId
+      WHERE message.projectId = ${this.currentProject.id}
+      ORDER BY sent ASC`
+    ))
+  }
+
+  sendMessage(content) {
+    this.db.run(
+      `INSERT INTO message (projectId, userId, sent, message) VALUES(
+          ${this.currentProject.id},
+          ${this.currentUser.id},
+          CURRENT_TIMESTAMP,
+          "${content}"
+      )`
+    )
+  }
+
+  readAllMessages() {
+    this.db.run(
+      `INSERT INTO messagesRead (userId, messageId)
+      SELECT u.id AS userId, m.id AS messageId
+      FROM user u
+      CROSS JOIN message m
+      WHERE m.projectId = ${this.currentProject.id}
+          AND NOT EXISTS (
+                SELECT 1
+                FROM messagesRead mr
+                WHERE mr.userId = u.id AND mr.messageId = m.id
+          );`
+    )
   }
 
   _addUsersToMeeting(meetingId, projectId) {

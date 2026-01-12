@@ -55,37 +55,46 @@
                 </div>
           </div>
           </div>
-
-        <!-- RIGHT: Meetings -->
-        <div class="card card-meetings">
+          
+          <div>
+          <!-- RIGHT: Meetings -->
+          <div class="card card-meetings">
           <div class="card-header">
-            <h3 class="card-title">Meetings</h3>
+                <h3 class="card-title">Meetings</h3>
+                </div>
+  
+                <ul class="meetings">
+                <li v-for="m in getProjectMeetings()" :key="m.id" class="meeting-item">
+                <div class="meeting-main">
+                          <div class="meeting-title">{{ m.name }}</div>
+                          <div class="meeting-date">{{ formatMeetingTime(m.time) }}</div>
+                          <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
+                </div>
+  
+                <div class="btn-container">
+                          <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
+                          <div class="btn-spacer"></div>
+                          <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
+                </div>
+                </li>
+  
+                <li v-if="getProjectMeetings().length === 0" class="empty">
+                No meetings yet. Add one below.
+                </li>
+                </ul>
+  
+                <div class="button-row">
+                <button class="btn btn-primary" @click="openModal">Add meeting</button>
+                </div>
+                </div>
+  
+                <div class="card card-messages">
+                <div class="card-header">
+                          <h3 class="card-title">Project Chats</h3>
+                </div>
+                <messagesProject :model="model" />
+                </div>
           </div>
-
-          <ul class="meetings">
-            <li v-for="m in getProjectMeetings()" :key="m.id" class="meeting-item">
-              <div class="meeting-main">
-                <div class="meeting-title">{{ m.name }}</div>
-                <div class="meeting-date">{{ formatMeetingTime(m.time) }}</div>
-                <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
-              </div>
-
-              <div class="btn-container">
-                <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
-                <div class="btn-spacer"></div>
-                <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
-              </div>
-            </li>
-
-            <li v-if="getProjectMeetings().length === 0" class="empty">
-              No meetings yet. Add one below.
-            </li>
-          </ul>
-
-          <div class="button-row">
-            <button class="btn btn-primary" @click="openModal">Add meeting</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -248,6 +257,7 @@ import { ref, computed, nextTick, onBeforeUnmount } from "vue";
 import EditProjectBtn from "./../components/EditProject.vue";
 import Deadlines from "@/components/Deadlines.vue";
 import UserProjects from "@/components/UserProjects.vue";
+import messagesProject from "@/components/ChatProject.vue"
 
 const props = defineProps(["model"]);
 
@@ -587,6 +597,13 @@ div.card-filled {
 
 .card-progress {
   margin-top: -15px;
+  background-color: #aebdf7;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.card-messages {
+  margin-top: 10px;
   background-color: #aebdf7;
   padding: 20px;
   border-radius: 16px;

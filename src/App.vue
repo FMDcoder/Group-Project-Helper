@@ -82,7 +82,7 @@ export default {
 
 <style>
 
-h1, h2, h3, h4, h5, h6, p, span, a, button, li, ul, input, textarea {
+h1, h2, h3, h4, h5, h6, p, span, a, button, li, ul, input, textarea, label {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
