@@ -2,6 +2,7 @@
   <div ref="theBox" class="dropdown">
     <button
       class="dropdown-toggle"
+      :class="{ 'dropdown-toggle-unselected': !getCurrentProjectName() }"
       @click="toggleDropdown"
       aria-haspopup="true"
       :aria-expanded="isOpen"
@@ -159,6 +160,11 @@ export default {
 .dropdown-toggle:hover {
   background-color: #1d4ed8;
   transform: translateY(-1px);
+}
+
+.dropdown-toggle-unselected {
+  color: #f3f3f3;
+  font-style: italic;
 }
 
 .dropdown-menu {

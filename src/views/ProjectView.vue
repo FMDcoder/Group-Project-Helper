@@ -90,10 +90,10 @@
   
                 <div class="card card-messages">
                 <div class="card-header">
-                          <h3 class="card-title">Project Chats</h3>
+                  <h3 class="card-title">Chat</h3>
                 </div>
                 <messagesProject :model="model" />
-                </div>
+              </div>
           </div>
       </div>
     </div>

@@ -3,10 +3,10 @@
         <label class="empty" :key="unreadMessages">You have ({{ this.model.getUnreadMessages() }}) unread messages</label>
     </div>
     <div class="btn-container" style="margin-top: 10px;">
-        <button class="btn btn-primary" @click="openMessagePopup">Chat</button>
+        <button class="btn btn-primary" @click="openMessagePopup">View messages</button>
     </div>
 
-    <!-- MODAL: Add meeting -->
+    <!-- MODAL: View messages -->
     <div v-if="showMessageModel" class="modal-backdrop" @click.self="closeMessagePopup">
       <div class="modal" role="dialog" aria-modal="true" aria-label="Add meeting">
         <div class="modal-header">
@@ -14,16 +14,16 @@
           <button class="btn btn-ghost" @click="closeMessagePopup" aria-label="Close">✕</button>
         </div>
         <div>
-          <div class="chat-container">
-                <div v-for="message in this.model.getMessages()" :key="updateVar">
+          <div ref="chatContainer" class="chat-container">
+                <div v-for="message in this.model.getMessages()" :key="message.id">
                     <div>
-                          <div v-if="message[6] == 'Joel'">
+                          <div v-if="message[6] == 'Joel'" class="message-container response-container">
                                           <label class="response-name">You</label>
                                           <div class="message response">
                                           <span> {{ message[4] }}</span>
                                           </div>
                           </div>
-                          <div v-else>
+                          <div v-else class="message-container">
                           <label class="response-comment">{{ message[6] }}</label>
                                           <div class="message">
                                           <span> {{ message[4]}}</span>
@@ -35,8 +35,8 @@
         </div>
         <div class="send-message-container">
             <label class="field">
-                <input v-model="newMessage.content" type="text" placeholder="Message" />
-                <button class="btn btn-primary" @click="SendMessage" :disabled="isSendDisabled">Send</button>
+                <input v-model="newMessage.content" type="text" placeholder="Message" ref="messageInput" />
+                <button class="btn btn-primary" @click="sendMessage" :disabled="isSendDisabled">Send</button>
           </label>
         </div>
       </div>
@@ -63,25 +63,39 @@
         methods: {
             openMessagePopup() {
                 this.showMessageModel = true
-                window.addEventListener('keydown', this.handleKeyDown)
-                this.readAllMessages()
+                window.addEventListener('keydown', this.handleKeyDown);
+                this.scrollToBottom();
+                this.readAllMessages();
+
+              this.$nextTick(() => {
+                this.$refs.messageInput?.focus?.();
+              });
+
             },
             closeMessagePopup() {
-                this.showMessageModel = false
-                window.removeEventListener('keydown', this.handleKeyDown)
+                this.showMessageModel = false;
+                window.removeEventListener('keydown', this.handleKeyDown);
             },
             handleKeyDown(e) {
                 if (e.key === 'Escape') {
-                    this.closeMessagePopup()
+                    this.closeMessagePopup();
                 }
             },
             readAllMessages() {
                 this.model.readAllMessages();
                 this.unreadMessages = 0;
             },
-            SendMessage() {
-                this.model.sendMessage(this.newMessage.content)
-                this.updateVar = !this.updateVar;
+            sendMessage() {
+              this.model.sendMessage(this.newMessage.content)
+              this.updateVar = !this.updateVar;
+              this.newMessage.content = "";
+              this.scrollToBottom();
+            },
+            scrollToBottom() {
+              this.$nextTick(() => {
+              const chatBox = this.$refs.chatContainer.lastElementChild;
+              chatBox.scrollIntoView({ block: 'end' });
+              });
             }
         },
         watch: {
@@ -111,25 +125,35 @@
     
 }
 
+.message-container {
+  display: block;
+  width: 85%;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.response-container {
+  margin-left: 0;
+  margin-right: auto;
+}
+
 .message {
-    background-color: #aebdf7;
-    padding: 10px;
-    border-radius: 12px;
+  background-color: #aebdf7;
+  padding: 10px;
+  border-radius: 12px;
 }
 
 .response {
-    background-color: white;
-    border: 3px solid lightgray;
+  /*width: calc(100% - 30px);*/
+  background-color: white;
+  border: 3px solid lightgray;
     
-    width: calc(100% - 30px);
-
-    text-align: right;
-    display: inline-block;
+  /*text-align: right;*/
 }
 
 .response-name {
     width: calc(100% - 5px);
-    text-align: right;
+    text-align: left;
     display: inline-block;
 
     margin-top: 10px;
