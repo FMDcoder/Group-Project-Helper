@@ -1,7 +1,7 @@
 <template>
   <section class="page">
     <div class="page-header">
-      <h2 v-if="!currentProjectId">Task Board</h2>
+      <h2>Task Board</h2>
       <p v-if="currentProjectId" class="subtitle">
         Manage tasks for: <b>{{ currentProjectName }}</b>
       </p>
@@ -211,7 +211,7 @@
               <button class="btn btn-ghost" @click.stop="openDelete(t)">Delete</button>
             </div>
 
-            <div class="move-row">
+            <div class="move-row in-progress">
               <button class="btn" @click.stop="moveTask(t.id, statusIds.todo)">Move to To Do</button>
               <button class="btn btn-primary" @click.stop="moveTask(t.id, statusIds.done)">
                 Move to Done
@@ -320,8 +320,13 @@
           </label>
 
           <label class="field">
-            <span class="field-label">Deadline</span>
-            <input v-model="editForm.deadline" type="datetime-local" />
+            <span class="field-label">Date</span>
+            <input v-model="editForm.date" type="date" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Time</span>
+            <input v-model="editForm.time" type="time" />
           </label>
         </div>
 
@@ -393,7 +398,8 @@ const editForm = ref({
   id: null,
   name: "",
   description: "",
-  deadline: "",
+  date: "",
+  time: "",
 });
 
 const editTitleInput = ref(null);
@@ -649,14 +655,27 @@ function moveTask(taskId, newStatusId) {
   saveOpenState();
 }
 
+function toDateAndTime(isoLike) {
+  const d = new Date(isoLike);
+  const pad = (n) => String(n).padStart(2, "0");
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return { date, time };
+}
+
 function openEdit(task) {
   showEdit.value = true;
+
+  const dt = task.deadline ?
+    toDateAndTime(task.deadline) :
+    {date: "", time: ""};
 
   editForm.value = {
     id: task.id,
     name: task.name ?? "",
     description: task.description ?? "",
-    deadline: task.deadline ? props.model.toDatetimeLocal(task.deadline) : "",
+    date: dt.date,
+    time: dt.time,
   };
 
   nextTick(() => editTitleInput.value?.focus?.());
@@ -680,11 +699,21 @@ function closeEdit() {
 function saveEdit() {
   if (isEditDisabled.value) return;
 
+  let deadline = null;
+  const hasDate = String(editForm.value.date || "").trim().length > 0;
+  const hasTime = String(editForm.value.time || "").trim().length > 0;
+
+  if (hasDate && hasTime) {
+    const [year, month, day] = editForm.value.date.split("-").map(Number);
+    const [hours, minutes] = editForm.value.time.split(":").map(Number);
+    deadline = new Date(year, month - 1, day, hours, minutes);
+  }
+
   props.model.updateTask({
     id: editForm.value.id,
     name: editForm.value.name,
     description: editForm.value.description,
-    deadline: editForm.value.deadline || null,
+    deadline: deadline || null,
   });
 
   closeEdit();
@@ -1133,6 +1162,8 @@ input[type="datetime-local"] {
   flex-wrap: wrap;
 }
 
+.in-progress { min-width: 265px; }
+
 /* Buttons */
 .btn {
   border: 1px solid #e2e8f0;
@@ -1286,5 +1317,6 @@ input[type="datetime-local"] {
 @media (max-width: 1000px) {
   .taskboard { flex-direction: column; }
   .field-row { grid-template-columns: 1fr; }
+  .in-progress { min-width: 100px; }
 }
 </style>

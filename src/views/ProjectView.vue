@@ -70,7 +70,7 @@
                 <div class="meeting-date"><b>Place: </b>{{ m.place }}</div>
               </div>
 
-              <div>
+              <div class="btn-container">
                 <button class="btn btn-ghost" @click="openDeleteModal(m)">Delete</button>
                 <div class="btn-spacer"></div>
                 <button class="btn btn-primary" @click="editMeeting(m.id)">Edit</button>
@@ -719,6 +719,10 @@ div.card-filled {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 12px;
+}
+
+.btn-container {
+  min-width: 144px;
 }
 
 .btn {
