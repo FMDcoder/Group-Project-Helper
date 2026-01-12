@@ -1318,5 +1318,9 @@ input[type="datetime-local"] {
   .taskboard { flex-direction: column; }
   .field-row { grid-template-columns: 1fr; }
   .in-progress { min-width: 100px; }
+  .column {
+    width: 90%;
+    margin-left: 5%;
+  }
 }
 </style>
