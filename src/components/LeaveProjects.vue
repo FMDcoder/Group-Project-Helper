@@ -184,9 +184,9 @@ export default {
       this.model.leaveUserProject(this.selectedProjectId)
 
       // If you want to navigate to the project page:
-      if (this.$router) {
-        this.$router.push("/project");
-      }
+      //if (this.$router) {
+      //  this.$router.push("/project");
+      //}
 
       this.closePopup();
       this.closeConfirm();

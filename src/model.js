@@ -85,6 +85,7 @@ const MOCK_DATA = {
   project: [
     ["HCI project", "for the course DT137G"],
     ["Exam concert", "rock and blues"],
+    ["Save the world", "Still a lot to do..."],
     ["Final project ML", "for Machine learning course"],
     ["Presentation", "in the other course..."],
     ["Book review seminar", "Discuss the book ..."],
@@ -92,16 +93,24 @@ const MOCK_DATA = {
   ],
   task: [
     // [name, description, deadline, projectId, status]
-    ["Start view", "Front page of application", "2026-01-10 22:00:00", 1, 2],
-    ["Project view", "Details about the projects", "2026-01-11 23:59:59", 1, 3],
-    ["Taskboard view", "A way to structure what need to be done", "2026-01-10 10:01:00", 1, 3],
-    ["Bugfixes", "Not that our application has any bugs", "2026-01-11 18:30:00", 1, 2],
-    ["Final tweaks", "Bits and bobs", "2026-01-11 23:59:59", 1, 2],
-    ["Presentation", "Prepare to share the awesomeness to the world", "2026-01-12 11:59:59", 1, 1],
+    ["Start view", "Complete the UI", "2026-01-10 22:00:00", 1, 3],
+    ["Project view", "Details about the projects", "2026-01-09 23:59:59", 1, 3],
+    ["Taskboard view", "A way to structure what need to be done", "2026-01-10 22:00:00", 1, 3],
+    ["Bugfixes", "Not that our application has any bugs", "2026-01-11 18:30:00", 1, 3],
+    ["Report", "Write a report about the project", "2026-01-16 23:59:59", 1, 1],
+    ["Presentation", "Prepare to share the awesomeness to the world", "2026-01-12 17:00:00", 1, 2],
     ["Learn songs", "Learn the keyboard parts of the songs", "2026-03-15 10:00:00", 2, 1],
     ["Read the book", "Well, what are you waiting for?", "2026-02-24 11:00:00", 5, 2],
     ["Long term task", "It could have been december", "2027-01-05 09:30:00", 4, 1],
     ["Longer term task", "Let's see...", "2027-02-05 09:30:00", 4, 1],
+    ["Be nice to someone", "Everybody can do something", "2026-01-14 12:00:00", 3, 2],
+    ["End poverty", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Feed the hungry", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Cure cancer", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Cease warfare", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Stop injustice", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Save the climate", "...", "2035-12-31 23:59:00", 3, 1],
+    ["Spread education", "...", "2035-12-31 23:59:00", 3, 1],
   ],
   meeting: [
     // [name, time, place, projectId]
@@ -117,7 +126,6 @@ const MOCK_DATA = {
     [1, 1],
     [1, 2],
     [1, 3],
-    [1, 5],
     [2, 1],
     [2, 5],
     [3, 1],
@@ -127,12 +135,13 @@ const MOCK_DATA = {
   ],
   taskUser: [
     [1, 1],
-    [1, 2],
     [4, 2],
     [1, 5],
     [1, 6],
     [1, 7],
+    [1, 11],
     [2, 8],
+    [3, 3],
     [3, 8],
     [4, 8],
   ],
@@ -615,6 +624,7 @@ class GroupProjectHelperModel {
       WHERE userId = ${this.currentUser.id}
       AND projectId = ${projectid}`
     );
+    this.notifyObservers();
   }
 
   isInProject(projectid) {

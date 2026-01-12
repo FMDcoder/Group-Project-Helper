@@ -49,7 +49,7 @@ export default {
       const diffHours = (d.getTime() - Date.now()) / (1000 * 60 * 60);
 
       if (diffHours < 0) return "is-past";
-      if (assignee === null) return "is-unassigned";
+      //if (assignee === null) return "is-unassigned";
       if (diffHours <= 24) return "is-urgent";
       if (diffHours <= 72) return "is-soon";
       return "is-normal";
